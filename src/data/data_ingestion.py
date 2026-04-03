@@ -22,15 +22,15 @@ logger.addHandler(console_handler)
 
 
 # Logging File Configurations
-log_file_path = create_log_path("Ingest Data")
+log_file_path = create_log_path("Data-Ingestion")
 dataset_logger = CustomLogger(
-    logger_name="Training",
+    logger_name="Data Ingestion",
     log_filename=log_file_path
 )
 
 dataset_logger.set_log_level(level=logging.INFO)
 
-dataset_logger.save_logs(f"Make Dataset Pipeline Started at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
+dataset_logger.save_logs(f"Data Ingestion Pipeline Started at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
 
 def load_params(params_path: str) -> dict:
     """Load parameters from a YAML file."""
