@@ -4,6 +4,6 @@ data_ingestion:
 feature_engineering:
   max_features: 500
 
-# model_building:
-#   n_estimators: 25
-#   learning_rate: 0.1
+model_building:
+  n_estimators: 25
+  learning_rate: 0.1

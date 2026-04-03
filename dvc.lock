@@ -44,8 +44,8 @@ stages:
       nfiles: 2
     - path: src/features/feature_engineering.py
       hash: md5
-      md5: 703928b17ec13cda88a4a482827ebe01
-      size: 5020
+      md5: 70bdad1ced8a17738a46fed8c08d74c1
+      size: 4996
     params:
       params.yaml:
         feature_engineering.max_features: 500
@@ -55,3 +55,23 @@ stages:
       md5: 0e03cebe77a3c973acab3e89b4a8e4bf.dir
       size: 20536043
       nfiles: 2
+  model_building:
+    cmd: python src/models/model_building.py
+    deps:
+    - path: data/processed/train_tfidf.csv
+      hash: md5
+      md5: f41f7bca8d9ae03883e073cb3370d581
+      size: 16447886
+    - path: src/models/model_building.py
+      hash: md5
+      md5: 926d752892c9083837b108be8e8a5aed
+      size: 4607
+    params:
+      params.yaml:
+        model_building.learning_rate: 0.1
+        model_building.n_estimators: 25
+    outs:
+    - path: models/model.joblib
+      hash: md5
+      md5: d0afc18c23efa8c290aca05957ce3761
+      size: 44600
