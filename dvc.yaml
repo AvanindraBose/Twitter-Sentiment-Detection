@@ -33,3 +33,11 @@ stages:
     - model_building.n_estimators
     outs:
     - models/model.joblib
+  model_evaluation:
+    cmd: python src/models/model_evaluation.py
+    deps:
+    - data/processed/test_tfidf.csv
+    - models/model.joblib
+    - src/models/model_evaluation.py
+    outs:
+    - reports/metrics.json
