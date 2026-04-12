@@ -6,7 +6,7 @@ import logging
 from sklearn.ensemble import GradientBoostingClassifier
 from src.logger_class import CustomLogger,create_log_path
 from datetime import datetime , timezone
-
+from pathlib import Path
 
 # logging configuration -> Console and File Configurations
 logger = logging.getLogger('model_building')
@@ -96,6 +96,7 @@ def save_model(model, file_path: str) -> None:
 
 def main():
     try:
+        root_path = Path(__file__).parent.parent.parent
         params = load_params('params.yaml')['model_building']
 
         train_data = load_data('./data/processed/train_tfidf.csv')
@@ -103,8 +104,10 @@ def main():
         y_train = train_data.iloc[:, -1].values
 
         clf = train_model(X_train, y_train, params)
+        model_storage_path = root_path / 'models'
+        model_storage_path.mkdir(parents=True,exist_ok=True)
         
-        save_model(clf, 'models/model.joblib')
+        save_model(clf, model_storage_path / 'model.joblib')
     except Exception as e:
         logger.error('Failed to complete the model building process: %s', e)
         training_logger.save_logs(f"Failed to complete the model building process: {e}", log_level='error')

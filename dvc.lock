@@ -64,8 +64,8 @@ stages:
       size: 16447886
     - path: src/models/model_building.py
       hash: md5
-      md5: 926d752892c9083837b108be8e8a5aed
-      size: 4607
+      md5: 63e4218317f31d6859d414cbad4c0d69
+      size: 4815
     params:
       params.yaml:
         model_building.learning_rate: 0.1
@@ -73,8 +73,8 @@ stages:
     outs:
     - path: models/model.joblib
       hash: md5
-      md5: d0afc18c23efa8c290aca05957ce3761
-      size: 44600
+      md5: 12f18d9e72b629feaccaca38dcde59c7
+      size: 44888
   model_evaluation:
     cmd: python src/models/model_evaluation.py
     deps:
@@ -84,8 +84,8 @@ stages:
       size: 4088157
     - path: models/model.joblib
       hash: md5
-      md5: d0afc18c23efa8c290aca05957ce3761
-      size: 44600
+      md5: 12f18d9e72b629feaccaca38dcde59c7
+      size: 44888
     - path: src/models/model_evaluation.py
       hash: md5
       md5: 8b617a2d93df97c36cfe38a1e3ae214b
@@ -93,5 +93,5 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 16941ae4a2a40627e7ff957659af8808
-      size: 144
+      md5: 27da4d396432458535eee9ac2698b351
+      size: 145

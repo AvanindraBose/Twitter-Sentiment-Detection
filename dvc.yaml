@@ -39,7 +39,5 @@ stages:
     - data/processed/test_tfidf.csv
     - models/model.joblib
     - src/models/model_evaluation.py
-    outs:
-    - reports/metrics.json
     metrics:
     - reports/metrics.json

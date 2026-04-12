@@ -1,0 +1,4 @@
+[core]
+    remote = mytempremote
+['remote "mytempremote"']
+    url = C:\Users\AVANIN~1\AppData\Local\Temp\sample_files
