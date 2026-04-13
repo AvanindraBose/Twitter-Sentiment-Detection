@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 import yaml
 import logging
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
 from src.logger_class import CustomLogger,create_log_path
 from datetime import datetime , timezone
 from pathlib import Path
@@ -69,13 +69,13 @@ def load_data(file_path: str) -> pd.DataFrame:
         training_logger.save_logs(f"Unexpected error occurred while loading the data: {e}", log_level='error')
         raise
 
-def train_model(X_train: np.ndarray, y_train: np.ndarray, params: dict) -> GradientBoostingClassifier:
-    """Train the Gradient Boosting model."""
+def train_model(X_train: np.ndarray, y_train: np.ndarray, params: dict) -> LogisticRegression:
+    """Train the Logistic Regression model."""
     try:
-        clf = GradientBoostingClassifier(n_estimators=params['n_estimators'], learning_rate=params['learning_rate'])
+        clf = LogisticRegression(C=params['C'], solver=params['solver'], penalty=params['penalty'])
         clf.fit(X_train, y_train)
         logger.debug('Model training completed')
-        training_logger.save_logs(f"Model training completed with parameters: n_estimators={params['n_estimators']}, learning_rate={params['learning_rate']}", log_level='info')
+        training_logger.save_logs(f"Model training completed with parameters: C={params['C']}, solver={params['solver']}, penalty={params['penalty']}", log_level='info')
         return clf
     except Exception as e:
         logger.error('Error during model training: %s', e)
@@ -99,7 +99,7 @@ def main():
         root_path = Path(__file__).parent.parent.parent
         params = load_params('params.yaml')['model_building']
 
-        train_data = load_data('./data/processed/train_tfidf.csv')
+        train_data = load_data('./data/processed/train_bow.csv')
         X_train = train_data.iloc[:, :-1].values
         y_train = train_data.iloc[:, -1].values
 

@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
+import joblib
 import yaml
 import logging
 from pathlib import Path
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 from src.logger_class import  CustomLogger,create_log_path
 from datetime import datetime , timezone
 
@@ -70,10 +71,24 @@ def load_data(file_path: str) -> pd.DataFrame:
         feature_logger.save_logs(f"Unexpected error occurred while loading the data: {e}", log_level='error')
         raise
 
-def apply_tfidf(train_data: pd.DataFrame, test_data: pd.DataFrame, max_features: int) -> tuple:
-    """Apply TfIdf to the data."""
+def save_vectorizer(vectorizer: CountVectorizer, file_path: str) -> None:
+    """Save the Count Vectorizer model to a file."""
     try:
-        vectorizer = TfidfVectorizer(max_features=max_features)
+        file_path = Path(file_path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(file_path, 'wb') as file:
+            joblib.dump(vectorizer, file)
+        logger.debug('Count Vectorizer saved to %s', file_path)
+        feature_logger.save_logs(f"Count Vectorizer saved to {file_path}", log_level='info')
+    except Exception as e:
+        logger.error('Error saving Count Vectorizer: %s', e)
+        feature_logger.save_logs(f"Error saving Count Vectorizer: {e}", log_level='error')
+        raise
+
+def apply_count_vectorizer(train_data: pd.DataFrame, test_data: pd.DataFrame, max_features: int , model_path:str) -> tuple:
+    """Apply Count Vectorizer to the data."""
+    try:
+        vectorizer = CountVectorizer(max_features=max_features)
 
         X_train = train_data['content'].values
         y_train = train_data['sentiment'].values
@@ -88,13 +103,15 @@ def apply_tfidf(train_data: pd.DataFrame, test_data: pd.DataFrame, max_features:
 
         test_df = pd.DataFrame(X_test_bow.toarray())
         test_df['label'] = y_test
+        
+        save_vectorizer(vectorizer,model_path/"vectorizer.joblib")
 
-        logger.debug('TF IDF applied and data transformed')
-        feature_logger.save_logs(f"TF IDF applied and data transformed", log_level='info')
+        logger.debug('Count Vectorizer applied and data transformed')
+        feature_logger.save_logs(f"Count Vectorizer applied and data transformed", log_level='info')
         return train_df, test_df
     except Exception as e:
-        logger.error('Error during TF IDF transformation: %s', e)
-        feature_logger.save_logs(f"Error during TF IDF transformation: {e}", log_level='error')
+        logger.error('Error during Count Vectorizer transformation: %s', e)
+        feature_logger.save_logs(f"Error during Count Vectorizer transformation: {e}", log_level='error')
         raise
 
 def save_data(df: pd.DataFrame, file_path: str) -> None:
@@ -115,14 +132,16 @@ def main():
     try:
         params = load_params('params.yaml')
         max_features = params['feature_engineering']['max_features']
+        root_path = Path(__file__).parent.parent.parent
+        model_path = root_path/"models"
 
         train_data = load_data(Path("data/interim/train_processed.csv"))
         test_data = load_data(Path("data/interim/test_processed.csv"))
 
-        train_df, test_df = apply_tfidf(train_data, test_data, max_features)
+        train_df, test_df = apply_count_vectorizer(train_data, test_data, max_features,model_path)
 
-        save_data(train_df, Path("data") / "processed" / "train_tfidf.csv")
-        save_data(test_df, Path("data") / "processed" / "test_tfidf.csv")
+        save_data(train_df, Path("data") / "processed" / "train_bow.csv")
+        save_data(test_df, Path("data") / "processed" / "test_bow.csv")
 
     except Exception as e:
         logger.error('Failed to complete the feature engineering process: %s', e)

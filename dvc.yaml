@@ -26,18 +26,21 @@ stages:
   model_building:
     cmd: python src/models/model_building.py
     deps:
-    - data/processed/train_tfidf.csv
+    - data/processed/train_bow.csv
     - src/models/model_building.py
     params:
-    - model_building.learning_rate
-    - model_building.n_estimators
+    - model_building.C
+    - model_building.solver
+    - model_building.penalty
     outs:
     - models/model.joblib
   model_evaluation:
     cmd: python src/models/model_evaluation.py
     deps:
-    - data/processed/test_tfidf.csv
+    - data/processed/test_bow.csv
     - models/model.joblib
     - src/models/model_evaluation.py
+    outs:
+    - reports/experiments_info.json
     metrics:
     - reports/metrics.json

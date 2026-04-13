@@ -1,12 +1,18 @@
 import numpy as np
 import pandas as pd
 import joblib
+import mlflow
+import mlflow.sklearn
+import dagshub
 import json
+import os
 import logging
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
 from datetime import datetime, timezone
 from src.logger_class import CustomLogger, create_log_path
 
+mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
+dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
 
 # logging configuration
 logger = logging.getLogger('model_evaluation')
@@ -102,20 +108,56 @@ def save_metrics(metrics: dict, file_path: str) -> None:
         evaluation_logger.save_logs(f"Error occurred while saving the metrics: {e}", log_level='error')
         raise
 
-def main():
+def save_run_info(run_id: str, file_path: str) -> None:
+    """Save the MLflow run information to a JSON file."""
     try:
-        clf = load_model('./models/model.joblib')
-        test_data = load_data('./data/processed/test_tfidf.csv')
-        
-        X_test = test_data.iloc[:, :-1].values
-        y_test = test_data.iloc[:, -1].values
-
-        metrics = evaluate_model(clf, X_test, y_test)
-        
-        save_metrics(metrics, 'reports/metrics.json')
+        run_info = mlflow.get_run(run_id).info
+        run_data = {
+            'run_id': run_info.run_id,
+            'experiment_id': run_info.experiment_id,
+            # 'status': run_info.status,
+            # 'start_time': run_info.start_time,
+            # 'end_time': run_info.end_time,
+            # 'duration': (run_info.end_time - run_info.start_time) / 1000  # duration in seconds
+        }
+        with open(file_path, 'w') as file:
+            json.dump(run_data, file, indent=4)
+        logger.debug('Run information saved to %s', file_path)
+        evaluation_logger.save_logs(f"Run information saved to {file_path}", log_level='info')
     except Exception as e:
-        logger.error('Failed to complete the model evaluation process: %s', e)
-        evaluation_logger.save_logs(f"Failed to complete the model evaluation process: {e}", log_level='error')
+        logger.error('Error occurred while saving the run information: %s', e)
+        evaluation_logger.save_logs(f"Error occurred while saving the run information: {e}", log_level='error')
+        raise
+
+def main():
+    mlflow.set_experiment("twitter-sentiment-dvc-pipeline")
+    with mlflow.start_run(run_name = "LR Model Logging") as run :
+        try:
+            clf = load_model('./models/model.joblib')
+            test_data = load_data('./data/processed/test_bow.csv')
+        
+            X_test = test_data.iloc[:, :-1].values
+            y_test = test_data.iloc[:, -1].values
+
+            metrics = evaluate_model(clf, X_test, y_test)
+        
+            save_metrics(metrics, 'reports/metrics.json')
+
+            for metric_name , metric_value in metrics.items():
+                mlflow.log_metric(metric_name, metric_value)
+            
+            if hasattr(clf, 'get_params'):
+                params = clf.get_params()
+                for param_name, param_value in params.items():
+                    mlflow.log_param(param_name, param_value)
+            save_run_info(run.info.run_id,'reports/experiments_info.json')
+            mlflow.sklearn.log_model(clf, "model")
+            mlflow.log_artifact('reports/metrics.json')
+            mlflow.log_artifact('reports/experiments_info.json')
+            # mlflow.log_artifact('model_evaluation_errors.log')
+        except Exception as e:
+            logger.error('Failed to complete the model evaluation process: %s', e)
+            evaluation_logger.save_logs(f"Failed to complete the model evaluation process: {e}", log_level='error')
 
 if __name__ == '__main__':
     main()
