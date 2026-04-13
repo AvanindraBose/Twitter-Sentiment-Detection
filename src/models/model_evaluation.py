@@ -108,13 +108,14 @@ def save_metrics(metrics: dict, file_path: str) -> None:
         evaluation_logger.save_logs(f"Error occurred while saving the metrics: {e}", log_level='error')
         raise
 
-def save_run_info(run_id: str, file_path: str) -> None:
+def save_run_info(run_id: str,model_id: str, file_path: str) -> None:
     """Save the MLflow run information to a JSON file."""
     try:
         run_info = mlflow.get_run(run_id).info
         run_data = {
             'run_id': run_info.run_id,
             'experiment_id': run_info.experiment_id,
+            'model_id': model_id
             # 'status': run_info.status,
             # 'start_time': run_info.start_time,
             # 'end_time': run_info.end_time,
@@ -150,8 +151,8 @@ def main():
                 params = clf.get_params()
                 for param_name, param_value in params.items():
                     mlflow.log_param(param_name, param_value)
-            save_run_info(run.info.run_id,'reports/experiments_info.json')
-            mlflow.sklearn.log_model(clf, "model")
+            model_info = mlflow.sklearn.log_model(clf, "model")
+            save_run_info(run.info.run_id,model_info.model_id,'reports/experiments_info.json')
             mlflow.log_artifact('reports/metrics.json')
             mlflow.log_artifact('reports/experiments_info.json')
             # mlflow.log_artifact('model_evaluation_errors.log')
