@@ -155,6 +155,7 @@ def main():
             save_run_info(run.info.run_id,model_info.model_id,'reports/experiments_info.json')
             mlflow.log_artifact('reports/metrics.json')
             mlflow.log_artifact('reports/experiments_info.json')
+            mlflow.log_artifact('./models/vectorizer.joblib')
             # mlflow.log_artifact('model_evaluation_errors.log')
         except Exception as e:
             logger.error('Failed to complete the model evaluation process: %s', e)
