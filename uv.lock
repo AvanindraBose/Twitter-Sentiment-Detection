@@ -1457,6 +1457,7 @@ source = { editable = "." }
 dependencies = [
     { name = "dagshub" },
     { name = "dvc" },
+    { name = "fastapi" },
     { name = "hyperopt" },
     { name = "joblib" },
     { name = "mlflow" },
@@ -1464,11 +1465,13 @@ dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas" },
+    { name = "pydantic" },
     { name = "pyyaml" },
     { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "spacy" },
     { name = "typer" },
+    { name = "uvicorn" },
     { name = "xgboost" },
 ]
 
@@ -1490,6 +1493,7 @@ requires-dist = [
     { name = "coverage", marker = "extra == 'test'" },
     { name = "dagshub" },
     { name = "dvc", specifier = ">=3.0" },
+    { name = "fastapi" },
     { name = "hyperopt" },
     { name = "ipdb", marker = "extra == 'test'" },
     { name = "joblib" },
@@ -1498,6 +1502,7 @@ requires-dist = [
     { name = "nltk" },
     { name = "numpy", specifier = ">=1.24" },
     { name = "pandas", specifier = ">=2.0" },
+    { name = "pydantic" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pyyaml" },
     { name = "ruff", marker = "extra == 'test'" },
@@ -1506,6 +1511,7 @@ requires-dist = [
     { name = "spacy" },
     { name = "ty", marker = "extra == 'test'" },
     { name = "typer" },
+    { name = "uvicorn" },
     { name = "xgboost" },
 ]
 provides-extras = ["dev", "test"]

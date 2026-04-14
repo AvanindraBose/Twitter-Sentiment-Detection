@@ -19,6 +19,11 @@ dependencies = [
   "pandas>=2.0",
   "numpy>=1.24",
 
+  # Backend
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+
   # ML
   "scikit-learn>=1.3",
   "xgboost",
