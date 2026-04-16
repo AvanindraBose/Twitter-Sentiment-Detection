@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Twitter Sentiment Detection</title>
+    </head>
+    <body>
+        <h1>Twitter Sentiment Detection</h1>
+        <form action="/predict" method="POST">
+            <label>Write your tweet here:</label><br>
+            <textarea name="text" rows="4" cols="50"></textarea><br>
+            <input type="submit" value="Predict Sentiment">
+        </form>
+
+        <!-- Add this block to show the result -->
+        {% if sentiment is defined %}
+            <h2>Result: {{ sentiment }}</h2>
+        {% endif %}
+    </body>
+</html>

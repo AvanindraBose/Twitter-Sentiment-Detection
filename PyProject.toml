@@ -23,6 +23,7 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "pydantic",
+  "python-multipart",
 
   # ML
   "scikit-learn>=1.3",
