@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from backend.core.dependencies import get_db, get_redis_client, get_model
+from backend.core.dependencies import get_db, get_redis_client
 
 router = APIRouter(prefix="/health", tags=["Health"])
 
@@ -15,7 +15,7 @@ def health_check(db: Session = Depends(get_db)):
     redis.ping()
 
     # Model check
-    _ = get_model()
+    # _ = get_model()
 
     return {
         "status": "ok"

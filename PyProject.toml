@@ -29,6 +29,7 @@ dependencies = [
   "sqlalchemy",
   "asyncpg",
   "redis",
+  "pydantic[email]",
 
   # ML
   "scikit-learn>=1.3",

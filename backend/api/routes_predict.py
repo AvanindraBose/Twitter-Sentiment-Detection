@@ -4,24 +4,12 @@ from backend.schema.model_schema import RequestSchema,ResponseSchema
 from backend.services.model_service import predict_sentiment
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
-from src.logger_class import CustomLogger,create_log_path
+from backend.logging_fastapi.logger_api import prediction_logger
 
 router = APIRouter(tags=["Predict"])
 templates = Jinja2Templates(
     directory= "backend/templates"
 )
-
-#  File Handler Configuration
-prediction_logger = CustomLogger(
-    logger_name="prediction",
-    log_filename=create_log_path("prediction")
-)
-
-prediction_logger.save_logs("Prediction Route hit",log_level= "info")
-
-@router.get("/",response_class=HTMLResponse)
-def root(request: Request):
-    return templates.TemplateResponse(request = request , name = "index.html")
 
 @router.post("/predict",response_class=HTMLResponse)
 def prediction(request:Request , text:str = Form(...)):
