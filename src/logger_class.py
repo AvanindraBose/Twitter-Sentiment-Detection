@@ -26,7 +26,7 @@ def create_log_path(module_name: str) -> str:
     current_date_str = current_date.strftime("%d-%m-%Y")  # ! error at this point if not fixed
     # create log files based on current date
     log_file_name = module_log_path / (current_date_str + '.log')
-    return log_file_name
+    return str(log_file_name)
 
 
 class CustomLogger:
@@ -43,19 +43,19 @@ class CustomLogger:
         self.__log_path = log_filename
         
         # make the file handler object
-        file_handler = logging.FileHandler(filename=self.__log_path,
+        if not self.__logger.handlers:
+            file_handler = logging.FileHandler(filename=self.__log_path,
                                            mode='a')
         # add file handler to logger
-        self.__logger.addHandler(hdlr=file_handler)
-        if self.__logger.handlers:
-            return
+            self.__logger.addHandler(hdlr=file_handler)
+
         # formatter for logs
-        log_format = "%(asctime)s - %(levelname)s : %(message)s"
-        time_format = '%d-%m-%Y %H:%M:%S'
-        formatter = logging.Formatter(fmt=log_format,
+            log_format = "%(asctime)s - %(levelname)s : %(message)s"
+            time_format = '%d-%m-%Y %H:%M:%S'
+            formatter = logging.Formatter(fmt=log_format,
                                       datefmt=time_format)
         # add formatter to the file handler
-        file_handler.setFormatter(fmt=formatter)
+            file_handler.setFormatter(fmt=formatter)
         
         
     def get_log_path(self):

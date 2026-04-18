@@ -7,6 +7,12 @@ import string
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from backend.core.dependencies import load_artifacts
+from src.logger_class import CustomLogger, create_log_path
+
+prediction_logger = CustomLogger(
+    logger_name="prediction",
+    log_filename=create_log_path("prediction")
+)
 
 def lemmatization(text):
     """Lemmatize the text."""
@@ -60,14 +66,72 @@ def normalize_text(text):
 
     return text
 
-def predict_sentiment(data:dict) -> dict:
-    model,vectorizer = load_artifacts()
-    text = data['text']
-    normalized_text = normalize_text(text)
-    features = vectorizer.transform([normalized_text])
+def predict_sentiment(data: dict) -> dict:
 
-    features_df = pd.DataFrame.sparse.from_spmatrix(features)
-    features_df = pd.DataFrame(features.toarray(), columns=[str(i) for i in range(features.shape[1])])
+    prediction_logger.save_logs("Prediction pipeline started", "info")
 
-    prediction = model.predict(features_df)
-    return {"prediction": prediction[0]}
+    try:
+        text = data.get("text")
+
+        if not text:
+            raise ValueError("Input text is empty")
+
+        prediction_logger.save_logs("Input received for prediction", "info")
+
+    except Exception as e:
+        prediction_logger.save_logs(
+            f"[INPUT ERROR] Failed to read input: {str(e)}", "error"
+        )
+        raise
+
+    try:
+        model, vectorizer = load_artifacts()
+        prediction_logger.save_logs("Model and vectorizer loaded", "info")
+
+    except Exception as e:
+        prediction_logger.save_logs(
+            f"[MODEL LOAD ERROR] {str(e)}", "error"
+        )
+        raise
+
+    try:
+        normalized_text = normalize_text(text)
+        prediction_logger.save_logs("Text normalization completed", "info")
+
+    except Exception as e:
+        prediction_logger.save_logs(
+            f"[PREPROCESS ERROR] {str(e)}", "error"
+        )
+        raise
+
+    try:
+        features = vectorizer.transform([normalized_text])
+        prediction_logger.save_logs("Vectorization successful", "info")
+
+    except Exception as e:
+        prediction_logger.save_logs(
+            f"[VECTORIZATION ERROR] {str(e)}", "error"
+        )
+        raise
+
+    try:
+        # Only ONE conversion needed
+        features_df = pd.DataFrame(
+            features.toarray(),
+            columns=[str(i) for i in range(features.shape[1])]
+        )
+
+        prediction = model.predict(features_df)
+
+        prediction_logger.save_logs(
+            f"Prediction completed successfully | Output={prediction[0]}",
+            "info"
+        )
+
+        return {"prediction": prediction[0]}
+
+    except Exception as e:
+        prediction_logger.save_logs(
+            f"[PREDICTION ERROR] {str(e)}", "error"
+        )
+        raise
