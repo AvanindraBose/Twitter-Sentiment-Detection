@@ -28,6 +28,7 @@ dependencies = [
   "bcrypt",
   "sqlalchemy",
   "asyncpg",
+  "redis",
 
   # ML
   "scikit-learn>=1.3",
