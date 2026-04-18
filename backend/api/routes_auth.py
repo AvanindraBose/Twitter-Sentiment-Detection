@@ -1,4 +1,3 @@
-import logging
 from fastapi import APIRouter,HTTPException,status,Depends,Request
 from fastapi.responses import JSONResponse
 from backend.core.security import create_access_tokens, create_refresh_tokens,verify_refresh_token,verify_password,hash_password,hash_refresh_token,verify_hashed_refresh_token
@@ -11,9 +10,17 @@ from backend.db.models.users import User
 from backend.db.models.refresh_token import RefreshToken
 from datetime import datetime, timezone
 from backend.core.rate_limiter import login_rate_limiter , refresh_rate_limiter
+from src.logger_class import CustomLogger,create_log_path
 
 router = APIRouter(prefix="/auth",tags=["Auth"])
-logger = logging.getLogger(__name__)
+
+#  File Handler Configuration
+auth_logger = CustomLogger(
+    logger_name="auth",
+    log_filename=create_log_path("auth")
+)
+
+auth_logger.save_logs("Auth Route hit",log_level= "info")
 
 @router.post("/signup")
 async def signup(user_input:UserCreate , db:AsyncSession = Depends(get_db)):
@@ -23,6 +30,7 @@ async def signup(user_input:UserCreate , db:AsyncSession = Depends(get_db)):
     existing_user = result.scalar_one_or_none()
 
     if existing_user:
+        auth_logger.save_logs(f"User Creation Failed - Email already exists", log_level="error")
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail = "User Already Exists"
@@ -42,10 +50,9 @@ async def signup(user_input:UserCreate , db:AsyncSession = Depends(get_db)):
         await db.refresh(new_user)
     except Exception:
         await db.rollback()
-        logger.error(
-            "Signup failed due to DB error",
-            exc_info=True,
-            extra = {"email":user_input.email}
+        auth_logger.save_logs(
+            f"User Creation Failed - DB Error",
+            log_level="error"
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -64,6 +71,7 @@ async def login(request:Request , user_input:UserLogin , db:AsyncSession = Depen
     db_user = result.scalar_one_or_none()
 
     if not db_user:
+        auth_logger.save_logs(f"Login Failed - User not found", log_level="error")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail = "Invalid credentials"
@@ -75,6 +83,7 @@ async def login(request:Request , user_input:UserLogin , db:AsyncSession = Depen
     )
 
     if not password_valid:
+        auth_logger.save_logs(f"Login Failed - Invalid password for user", log_level="error")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail = "Invalid credentials"
@@ -108,11 +117,7 @@ async def login(request:Request , user_input:UserLogin , db:AsyncSession = Depen
         await db.commit()
     except Exception:
         await db.rollback()
-        logger.error(
-            "Login Token Persistance Failed",
-            exc_info= True,
-            extra={"user_id":db_user.id}
-        )
+        auth_logger.save_logs(f"Token Creation Failed for user - DB Error", log_level="error")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail = "Could not create tokens , please try again"
@@ -141,6 +146,7 @@ async def login(request:Request , user_input:UserLogin , db:AsyncSession = Depen
 async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_db), _= Depends(refresh_rate_limiter)):
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
+     auth_logger.save_logs(f"Token Refresh Failed - No refresh token provided", log_level="error")
      raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Refresh token missing"
@@ -148,6 +154,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
     payload = verify_refresh_token(refresh_token)
 # Using Nested Dependecies
     if payload is None :
+        auth_logger.save_logs(f"Token Refresh Failed - Invalid or expired refresh token", log_level="error")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail = "Invalid or expired refresh token"
@@ -169,6 +176,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         db_token = result.scalar_one_or_none()
 
         if not db_token:
+            auth_logger.save_logs(f"Token Refresh Failed - No token found in DB for user", log_level="error")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Refresh token not found. Please login again",
@@ -181,12 +189,14 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         )
 
         if not is_valid_token:
+            auth_logger.save_logs(f"Token Refresh Failed - Refresh token does not match DB record", log_level="error")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token",
             )
 
         if db_token.expires_at < datetime.now(timezone.utc):
+            auth_logger.save_logs(f"Token Refresh Failed - Refresh token expired for user", log_level="error")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Refresh token expired",
@@ -204,10 +214,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
 
         await db.commit()
 
-        logger.info(
-            "Tokens refreshed successfully",
-            extra={"user_id": user_id}
-        )
+        auth_logger.save_logs(f"Token Refresh Successful for user", log_level="info")
 
     except HTTPException:
         await db.rollback()
@@ -215,11 +222,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
 
     except Exception:
         await db.rollback()
-        logger.error(
-            "Refresh token rotation failed",
-            exc_info=True,
-            extra={"user_id": user_id},
-        )
+        auth_logger.save_logs(f"Token Refresh Failed - Error occurred while refreshing tokens for user", log_level="error")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Could not refresh tokens",
@@ -271,28 +274,19 @@ async def logout(
                     await db.delete(db_token)
                     await db.commit()
                     
-                    logger.info(
-                        "User logged out - token deleted",
-                        extra={"user_id": user_id}
-                    )
+                    auth_logger.save_logs("User logged out successfully",log_level="info")
                 else:
-                    logger.info(
-                        "User logged out - token already gone",
-                        extra={"user_id": user_id}
-                    )
+                    auth_logger.save_logs("User logged out - token already gone",log_level="info")
                     
             except Exception:
                 await db.rollback()
-                logger.exception(
-                    "Logout DB operation failed - continuing anyway",
-                    extra={"user_id": user_id}
-                )
+                auth_logger.save_logs("Logout DB operation failed - continuing anyway",log_level="error")
                 # Don't raise - still clear cookie and return success
         else:
-            logger.info("Logout with invalid/expired token - clearing cookie")
+            auth_logger.save_logs("Logout with invalid/expired token - clearing cookie",log_level="info")
     else:
-        logger.info("Logout with no refresh token - clearing cookie")
-    
+        auth_logger.save_logs("Logout with no refresh token - clearing cookie",log_level="info")
+
     # Always clear the cookie and return success (idempotent)
     response = JSONResponse(
         content={"message": "Logged out successfully"}
