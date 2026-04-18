@@ -232,3 +232,134 @@ textarea:focus {
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/* ── Auth input ── */
+.form-group {
+  margin-bottom: 1.1rem;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 300;
+  padding: 0.75rem 1rem;
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ── Auth button ── */
+.btn-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--accent);
+  color: #0a0a0c;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.btn-auth:hover { opacity: 0.88; }
+.btn-auth:active { transform: scale(0.98); }
+
+/* ── Auth switch link ── */
+.auth-switch {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.auth-switch a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
+/* ── Flash messages ── */
+.flash {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 1.25rem;
+  font-weight: 400;
+}
+
+.flash-error {
+  background: rgba(255,95,95,0.08);
+  border: 0.5px solid rgba(255,95,95,0.25);
+  color: #ff5f5f;
+}
+
+.flash-success {
+  background: rgba(79,255,176,0.08);
+  border: 0.5px solid rgba(79,255,176,0.25);
+  color: var(--accent);
+}
+
+/* ── Nav bar ── */
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 2rem;
+}
+
+.topnav .nav-brand {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.topnav .btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 1rem;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.topnav .btn-logout:hover {
+  color: #ff5f5f;
+  border-color: rgba(255,95,95,0.3);
+}
