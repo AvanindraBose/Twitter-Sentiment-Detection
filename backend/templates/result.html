@@ -1,12 +1,44 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Result — Twitter Sentiment Detection</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="page-wrapper">
 
-<html>
-    <head>
-        <title>Prediction Result</title>
-    </head>
-    <body>
-        <h1>Twitter Sentiment Detection</h1>
-        <h2>Result: {{ sentiment }}</h2>
-        <a href="/">Go Back</a>
-    </body>
+    <header class="site-header">
+      <span class="eyebrow">NLP · Emotion AI</span>
+      <h1>Sentiment Result</h1>
+      <p>Here's what the model detected.</p>
+    </header>
+
+    <div class="result-card">
+      <p class="result-label">Detected sentiment score</p>
+
+      <div class="sentiment-badge">
+        {% if sentiment == 1 %}
+          Positive &#x2197;
+        {% elif sentiment == 0 %}
+          Negative &#x2198;
+        {% else %}
+          {{ sentiment }}
+        {% endif %}
+      </div>
+
+      <p class="sentiment-raw">Raw value: {{ sentiment }}</p>
+
+      <a href="/" class="btn-back">
+        &#8592; Analyse another tweet
+      </a>
+    </div>
+
+    <footer class="site-footer">
+      Powered by a fine-tuned ML model &mdash; results are indicative only.
+    </footer>
+
+  </div>
+</body>
 </html>

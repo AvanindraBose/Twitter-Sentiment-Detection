@@ -1,20 +1,42 @@
 <!DOCTYPE html>
-
-<html>
-    <head>
-        <title>Twitter Sentiment Detection</title>
-    </head>
-    <body>
-        <h1>Twitter Sentiment Detection</h1>
-        <form action="/predict" method="POST">
-            <label>Write your tweet here:</label><br>
-            <textarea name="text" rows="4" cols="50"></textarea><br>
-            <input type="submit" value="Predict Sentiment">
-        </form>
-
-        <!-- Add this block to show the result -->
-        {% if sentiment is defined %}
-            <h2>Result: {{ sentiment }}</h2>
-        {% endif %}
-    </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Twitter Sentiment Detection</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="page-wrapper">
+ 
+    <header class="site-header">
+      <span class="eyebrow">NLP · Emotion AI</span>
+      <h1>Twitter Sentiment<br>Detection</h1>
+      <p>Analyse the emotional tone of any tweet instantly.</p>
+    </header>
+ 
+    <div class="card">
+      <form action="/predict" method="POST">
+        <label class="form-label" for="tweet">Your tweet</label>
+        <textarea
+          id="tweet"
+          name="text"
+          rows="5"
+          placeholder="e.g. I can't believe how amazing today has been…"
+        ></textarea>
+        <button type="submit" class="btn-predict">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Analyse Sentiment
+        </button>
+      </form>
+    </div>
+ 
+    <footer class="site-footer">
+      Powered by a fine-tuned ML model &mdash; results are indicative only.
+    </footer>
+ 
+  </div>
+</body>
 </html>
