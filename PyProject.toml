@@ -24,6 +24,10 @@ dependencies = [
   "uvicorn",
   "pydantic",
   "python-multipart",
+  "python-jose[cryptography]",
+  "bcrypt",
+  "sqlalchemy",
+  "asyncpg",
 
   # ML
   "scikit-learn>=1.3",
