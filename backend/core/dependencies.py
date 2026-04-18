@@ -3,7 +3,7 @@ import dagshub
 import os
 import joblib
 from mlflow.tracking import MlflowClient
-from src.logger_class import CustomLogger, create_log_path
+from backend.logging_fastapi.logger_api import prediction_logger,auth_logger
 from fastapi import Header,HTTPException,status,Depends,Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.core.config import settings
@@ -15,16 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
 load_dotenv()
-
-prediction_logger = CustomLogger(
-    logger_name="prediction",
-    log_filename=create_log_path("prediction")
-)
-
-auth_logger = CustomLogger(
-    logger_name="auth",
-    log_filename=create_log_path("auth")
-)
 
 try:
     mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))

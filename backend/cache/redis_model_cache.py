@@ -1,11 +1,6 @@
 import json
 from backend.core.dependencies  import get_redis_client
-from src.logger_class import CustomLogger,create_log_path
-
-prediction_logger = CustomLogger(
-    logger_name="prediction",
-    log_filename=create_log_path("prediction")
-)
+from backend.logging_fastapi.logger_api import prediction_logger
 
 async def get_cached_prediction(key:str):
     try:

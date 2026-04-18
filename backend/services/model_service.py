@@ -7,12 +7,7 @@ import string
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from backend.core.dependencies import load_artifacts
-from src.logger_class import CustomLogger, create_log_path
-
-prediction_logger = CustomLogger(
-    logger_name="prediction",
-    log_filename=create_log_path("prediction")
-)
+from backend.logging_fastapi.logger_api import prediction_logger
 
 def lemmatization(text):
     """Lemmatize the text."""

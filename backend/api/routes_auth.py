@@ -10,17 +10,9 @@ from backend.db.models.users import User
 from backend.db.models.refresh_token import RefreshToken
 from datetime import datetime, timezone
 from backend.core.rate_limiter import login_rate_limiter , refresh_rate_limiter
-from src.logger_class import CustomLogger,create_log_path
+from backend.logging_fastapi.logger_api import auth_logger
 
 router = APIRouter(prefix="/auth",tags=["Auth"])
-
-#  File Handler Configuration
-auth_logger = CustomLogger(
-    logger_name="auth",
-    log_filename=create_log_path("auth")
-)
-
-auth_logger.save_logs("Auth Route hit",log_level= "info")
 
 @router.post("/signup")
 async def signup(user_input:UserCreate , db:AsyncSession = Depends(get_db)):

@@ -3,7 +3,7 @@ from backend.api import routes_predict,routes_auth,routes_health,routes_root
 from backend.core.database import engine,Base
 from backend.middlewares.response_logger import ResponseLoggerMiddleware
 from fastapi.staticfiles import StaticFiles
-from backend.logging_fastapi.logger_api import prediction_logger , auth_logger , health_logger
+from backend.logging_fastapi.logger_api import auth_logger
 from contextlib import asynccontextmanager
 
 @asynccontextmanager

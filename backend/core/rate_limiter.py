@@ -4,17 +4,7 @@ from backend.core.dependencies import get_redis_client , get_refresh_user_id , g
 import os
 from dotenv import load_dotenv
 from redis.asyncio import Redis
-from src.logger_class import CustomLogger, create_log_path
-
-auth_logger = CustomLogger(
-    logger_name="auth",
-    log_filename=create_log_path("auth")
-)
-
-prediction_logger = CustomLogger(
-    logger_name="prediction",
-    log_filename=create_log_path("prediction")
-)
+from backend.logging_fastapi.logger_api import prediction_logger,auth_logger
 
 load_dotenv()
 logger = logging.getLogger(__name__)
