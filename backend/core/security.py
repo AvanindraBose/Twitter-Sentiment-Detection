@@ -5,6 +5,7 @@ import hashlib
 from datetime import datetime, timezone ,timedelta
 from jose import JWTError , jwt
 from backend.core.config import settings
+from backend.logging_fastapi.logger_api import auth_logger
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
@@ -23,40 +24,55 @@ REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
 # Replacing New Logic with Access and Refresh Tokens
 
 def create_access_tokens(user_id:str):
-    now  = datetime.now(timezone.utc)
+    try:
+        auth_logger.save_logs(f"Creating access token for user_id: {user_id}",log_level="info")
+        now  = datetime.now(timezone.utc)
 
-    payload = {
+        payload = {
         "sub":user_id,
         "token_type":"access",
         "iat":now,
         "exp" : now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    }
+        }
 
-    return jwt.encode(
+        token = jwt.encode(
         payload,
         settings.JWT_ACCESS_SECRET_KEY,
         settings.JWT_ALGORITHM  
-    )
+        )
+
+    except Exception as e:
+        auth_logger.save_logs(f"Error creating access token: {str(e)}",log_level="error")
+        raise e
+    else:
+        auth_logger.save_logs(f"Access token created successfully for user_id: {user_id}",log_level="info")
+        return token
 
 # Refresh Tokens
 
 def create_refresh_tokens(user_id:str):
-    now  = datetime.now(timezone.utc)
-    expires_at = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    payload = {
+    try:
+        auth_logger.save_logs(f"Creating refresh token for user_id: {user_id}",log_level="info")
+        now  = datetime.now(timezone.utc)
+        expires_at = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        payload = {
         "sub":user_id,
         "token_type":"refresh",
         "iat":now,
         "exp" : expires_at
-    }
+        }
 
-    token = jwt.encode(
+        token = jwt.encode(
         payload,
         settings.JWT_REFRESH_SECRET_KEY,
         settings.JWT_ALGORITHM  
-    )
-
-    return token,expires_at
+        )
+    except Exception as e:
+        auth_logger.save_logs(f"Error creating refresh token: {str(e)}" , log_level="error")
+        raise e
+    else:
+        auth_logger.save_logs(f"Refresh token created successfully for user_id: {user_id}",log_level="info")
+        return token,expires_at
 
 
 # def verify_token(token:str):
@@ -75,11 +91,13 @@ def verify_access_token(token: str):
         )
 
         if payload.get("token_type") != "access":
+            auth_logger.save_logs(f"Invalid access token type: {payload.get('token_type')}", log_level="warning")
             return None
 
         return payload
 
     except JWTError:
+        auth_logger.save_logs(f"JWTError while verifying access token: {str(JWTError)}", log_level="error")
         return None
 
 def verify_refresh_token(token: str):
@@ -91,11 +109,13 @@ def verify_refresh_token(token: str):
         )
 
         if payload.get("token_type") != "refresh":
+            auth_logger.save_logs(f"Invalid refresh token type: {payload.get('token_type')}", log_level="warning")
             return None
 
         return payload
 
     except JWTError:
+        auth_logger.save_logs(f"JWTError while verifying refresh token: {str(JWTError)}", log_level="error")
         return None
 
 def hash_password(password:str)-> str:
