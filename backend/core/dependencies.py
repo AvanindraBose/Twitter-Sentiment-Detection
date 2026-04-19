@@ -100,7 +100,7 @@ def get_current_user(
             detail="Not Authenticated"
         )
 
-    payload = verify_access_token(refresh_token)
+    payload = verify_refresh_token(refresh_token)
     if payload is None:
         auth_logger.save_logs("User ID Not Found in the Cookies",log_level="error")
         raise HTTPException(
