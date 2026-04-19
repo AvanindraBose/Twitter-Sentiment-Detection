@@ -75,18 +75,48 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             auth_logger.save_logs("Database session closed", log_level="info")
 
 
+# def get_current_user(
+#         credentials:HTTPAuthorizationCredentials = Depends(security)
+# ):
+#     token = credentials.credentials
+#     payload = verify_access_token(token)
+#     if payload is None:
+#         raise HTTPException(
+#             status_code = status.HTTP_401_UNAUTHORIZED,
+#             detail = "Invalid or expired access token"
+#         )
+    
+#     return payload["sub"]
+
 def get_current_user(
-        credentials:HTTPAuthorizationCredentials = Depends(security)
+        request:Request
 ):
-    token = credentials.credentials
-    payload = verify_access_token(token)
+    refresh_token = request.cookies.get("refresh_token")
+
+    if not refresh_token:
+        auth_logger.save_logs("Refresh Token Not Found In the Cookies",log_level="error")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not Authenticated"
+        )
+
+    payload = verify_access_token(refresh_token)
     if payload is None:
+        auth_logger.save_logs("User ID Not Found in the Cookies",log_level="error")
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
             detail = "Invalid or expired access token"
         )
+    user_id = payload.get("sub")
     
-    return payload["sub"]
+    if not user_id : 
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid session"
+        )
+    
+    return user_id
 
 # def get_redis_client() -> Redis:
 #     try: 

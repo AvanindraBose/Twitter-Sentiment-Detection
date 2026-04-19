@@ -4,6 +4,7 @@ from backend.core.dependencies import get_redis_client , get_refresh_user_id , g
 import os
 from dotenv import load_dotenv
 from redis.asyncio import Redis
+from redis.exceptions import RedisError
 from backend.logging_fastapi.logger_api import prediction_logger,auth_logger
 
 load_dotenv()
@@ -39,7 +40,7 @@ async def login_rate_limiter(request:Request , redis : Redis = Depends(get_redis
         )
     
         await redis.incr(key)
-    except redis.RedisError:
+    except RedisError:
         auth_logger.save_logs("Redis unavailable — login rate limiter bypassed", log_level="critical")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -64,7 +65,7 @@ async def refresh_rate_limiter(user_id:str = Depends(get_refresh_user_id) , redi
                 detail="Too many refresh token attempts. Please try again later."
             )
         await redis.incr(key)
-    except redis.RedisError:
+    except RedisError:
         auth_logger.save_logs("Redis unavailable — refresh rate limiter bypassed", log_level="critical")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -91,7 +92,7 @@ async def predict_rate_limiter(user_id:str = Depends(get_current_user) , redis :
         )
     
         await redis.incr(key)
-    except redis.RedisError:
+    except RedisError:
         prediction_logger.save_logs("Redis unavailable — Prediction rate limiter bypassed", log_level="critical")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

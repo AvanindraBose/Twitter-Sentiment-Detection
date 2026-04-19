@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from backend.core.dependencies import get_db, get_redis_client
+from backend.core.dependencies import get_db
 from backend.logging_fastapi.logger_api import health_logger
 
 router = APIRouter(prefix="/health", tags=["Health"])
 
 
-@router.get("")
+@router.get("/health")
 def health_check(
-    db: Session = Depends(get_db),
-    redis=Depends(get_redis_client)
+    db: Session = Depends(get_db)
+    # redis=Depends(get_redis_client)
 ):
     health_logger.info("Health check initiated")
 

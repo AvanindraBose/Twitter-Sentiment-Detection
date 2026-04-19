@@ -1,5 +1,5 @@
-from fastapi import APIRouter,HTTPException,status,Depends,Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter,HTTPException,status,Depends,Request,Form
+from fastapi.responses import JSONResponse,RedirectResponse,HTMLResponse
 from backend.core.security import create_access_tokens, create_refresh_tokens,verify_refresh_token,verify_password,hash_password,hash_refresh_token,verify_hashed_refresh_token
 from backend.schema.users_auth import UserCreate,UserLogin
 from backend.core.dependencies import get_db
@@ -11,11 +11,58 @@ from backend.db.models.refresh_token import RefreshToken
 from datetime import datetime, timezone
 from backend.core.rate_limiter import login_rate_limiter , refresh_rate_limiter
 from backend.logging_fastapi.logger_api import auth_logger
+from fastapi.templating import Jinja2Templates
+from pydantic import ValidationError
 
 router = APIRouter(prefix="/auth",tags=["Auth"])
+templates = Jinja2Templates(directory="backend/templates")
 
-@router.post("/signup")
-async def signup(user_input:UserCreate , db:AsyncSession = Depends(get_db)):
+
+@router.get("/signup",response_class=HTMLResponse)
+async def signup_page(request:Request):
+    return templates.TemplateResponse(
+        request=request,
+        name = "signup.html",
+    )
+
+@router.get("/login",response_class=HTMLResponse)
+async def login_page(request:Request):
+    success = None
+
+    if request.query_params.get("signup") == "success":
+        success = "Account created successfully. Please sign in."
+
+    if request.query_params.get("logout") == "success":
+        success = "You have been signed out successfully."
+    
+    return templates.TemplateResponse(
+    request=request,
+    name="login.html",
+    context={"success": success}
+    )
+
+@router.post("/signup",response_class=HTMLResponse)
+async def signup(request:Request, 
+                username: str = Form(...) ,
+                email: str = Form(...),
+                password: str = Form(...), 
+                db:AsyncSession = Depends(get_db)):
+    
+    try:
+        user_input = UserCreate(
+            username=username,
+            email=email,
+            password=password
+        )
+    except ValidationError as exc:
+        error_message = exc.errors()[0]['msg']
+        auth_logger.save_logs(f"User Creation Failed - Validation Error: {error_message}", log_level="error")
+        return templates.TemplateResponse(
+                request=request,
+                name="signup.html",
+                context={"error": error_message},
+                status_code=status.HTTP_400_BAD_REQUEST
+        )
 
     stmt = select(User).where(User.email == user_input.email)
     result = await db.execute(stmt)
@@ -23,9 +70,14 @@ async def signup(user_input:UserCreate , db:AsyncSession = Depends(get_db)):
 
     if existing_user:
         auth_logger.save_logs(f"User Creation Failed - Email already exists", log_level="error")
-        raise HTTPException(
-            status_code = status.HTTP_400_BAD_REQUEST,
-            detail = "User Already Exists"
+        return templates.TemplateResponse(
+            request = request ,
+            name="signup.html",
+            context=
+            {
+                "error":"Email already exists"
+            },
+            status_code=status.HTTP_400_BAD_REQUEST
         )
     # CPU Based Operation
     password_hash = await run_in_threadpool(
@@ -46,17 +98,46 @@ async def signup(user_input:UserCreate , db:AsyncSession = Depends(get_db)):
             f"User Creation Failed - DB Error",
             log_level="error"
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = "Could not create user , please try again"
+        
+        return templates.TemplateResponse(
+            request = request,
+            name = "signup.html",
+            context=
+            {
+                "error":"Could not create user, please try again"
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    return {
-        "message":"User Created Successfully"
-    }
+    return RedirectResponse(
+        url="/auth/login?signup=success",
+        status_code=status.HTTP_303_SEE_OTHER
+    )
 
-@router.post("/login")
-async def login(request:Request , user_input:UserLogin , db:AsyncSession = Depends(get_db) , _ = Depends(login_rate_limiter)):
+@router.post("/login",response_class=HTMLResponse)
+async def login(request:Request , 
+                email:str = Form(...), 
+                password: str = Form(...),
+                db:AsyncSession = Depends(get_db) , 
+                _ = Depends(login_rate_limiter)):
+    
+    try:
+        user_input = UserLogin(
+            email = email,
+            password= password
+        )
+    except ValidationError as exc:
+        error_msg = exc.errors()[0]["msg"]
+        auth_logger.save_logs(f"User Login Falied : Validation Error {error_msg}")
+        return templates.TemplateResponse(
+            request = request,
+            name = "login.html",
+            context =
+            {
+                "error" : error_msg
+            },
+            status_code= status.HTTP_400_BAD_REQUEST
+        )
 
     stmt = select(User).where(User.email == user_input.email)
     result = await db.execute(stmt)
@@ -64,10 +145,16 @@ async def login(request:Request , user_input:UserLogin , db:AsyncSession = Depen
 
     if not db_user:
         auth_logger.save_logs(f"Login Failed - User not found", log_level="error")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail = "Invalid credentials"
+        
+        return templates.TemplateResponse(
+            request = request,
+            name = "login.html",
+            context = {
+                "error": "Invalid credentials"
+            },
+            status_code= status.HTTP_401_UNAUTHORIZED
         )
+    
     password_valid = await run_in_threadpool(
         verify_password,
         user_input.password,
@@ -76,9 +163,19 @@ async def login(request:Request , user_input:UserLogin , db:AsyncSession = Depen
 
     if not password_valid:
         auth_logger.save_logs(f"Login Failed - Invalid password for user", log_level="error")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail = "Invalid credentials"
+        # raise HTTPException(
+        #     status_code=status.HTTP_401_UNAUTHORIZED,
+        #     detail = "Invalid credentials"
+        # )
+
+        return templates.TemplateResponse(
+            request = request,
+            name ="login.html",
+            context = 
+            {
+                "error" : "Invalid Credentials"
+            },
+            status_code= status.HTTP_401_UNAUTHORIZED
         )
     
     access_token = create_access_tokens(str(db_user.id))
@@ -110,16 +207,29 @@ async def login(request:Request , user_input:UserLogin , db:AsyncSession = Depen
     except Exception:
         await db.rollback()
         auth_logger.save_logs(f"Token Creation Failed for user - DB Error", log_level="error")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = "Could not create tokens , please try again"
+        # raise HTTPException(
+        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     detail = "Could not create tokens , please try again"
+        # )
+        return templates.TemplateResponse(
+            request= request,
+            name = "login.html",
+            context = 
+            {
+                "error" : "Could not log in PLease try again."
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-    response = JSONResponse(
-        content= {
-            "access_token" : access_token,
-            "token_type" : "bearer"
-        }
+    # response = JSONResponse(
+    #     content= {
+    #         "access_token" : access_token,
+    #         "token_type" : "bearer"
+    #     }
+    # )
+    response = RedirectResponse(
+            url = "/",
+            status_code= status.HTTP_303_SEE_OTHER
     )
     max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
     response.set_cookie(
@@ -280,8 +390,9 @@ async def logout(
         auth_logger.save_logs("Logout with no refresh token - clearing cookie",log_level="info")
 
     # Always clear the cookie and return success (idempotent)
-    response = JSONResponse(
-        content={"message": "Logged out successfully"}
+    response = RedirectResponse(
+        url = "/auth/login?logout=success",
+        status_code=status.HTTP_303_SEE_OTHER
     )
     
     response.delete_cookie(
