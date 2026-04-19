@@ -6,7 +6,6 @@ async def get_cached_prediction(key:str):
     try:
         redis_client = get_redis_client()
         value = await redis_client.get(key)
-        prediction_logger.save_logs(f"Retrieved cached prediction.", log_level="info")
         return json.loads(value) if value else None
     except Exception as e:
         prediction_logger.save_logs(f"Error retrieving cached prediction: {e}", log_level="error")

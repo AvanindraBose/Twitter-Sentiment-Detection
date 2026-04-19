@@ -8,6 +8,9 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from backend.core.dependencies import load_artifacts
 from backend.logging_fastapi.logger_api import prediction_logger
+from backend.core.security import make_cache_key
+from backend.cache.redis_model_cache import get_cached_prediction,set_cached_prediction
+from fastapi.concurrency import run_in_threadpool
 
 def lemmatization(text):
     """Lemmatize the text."""
@@ -61,10 +64,28 @@ def normalize_text(text):
 
     return text
 
-def predict_sentiment(data: dict) -> dict:
+def run_model_prediction(model,features):
+    features_df = pd.DataFrame(
+            features.toarray(),
+            columns=[str(i) for i in range(features.shape[1])]
+        )
+    pred = model.predict(features_df)
+
+    return pred
+
+
+async def predict_sentiment(data: dict) -> dict:
 
     prediction_logger.save_logs("Prediction pipeline started", "info")
 
+    key = make_cache_key(data=data)
+
+    cached_result = await get_cached_prediction(key)
+
+    if cached_result :
+        prediction_logger.save_logs(f"Retrieved cached prediction.", log_level="info")
+        return cached_result
+    
     try:
         text = data.get("text")
 
@@ -110,20 +131,23 @@ def predict_sentiment(data: dict) -> dict:
         raise
 
     try:
-        # Only ONE conversion needed
-        features_df = pd.DataFrame(
-            features.toarray(),
-            columns=[str(i) for i in range(features.shape[1])]
-        )
 
-        prediction = model.predict(features_df)
+        prediction = await run_in_threadpool(
+            run_model_prediction,
+            model,
+            features
+        )
 
         prediction_logger.save_logs(
             f"Prediction completed successfully | Output={prediction[0]}",
             "info"
         )
 
-        return {"prediction": prediction[0]}
+        result = {"prediction": prediction[0]}
+
+        await set_cached_prediction(key,result)
+
+        return result
 
     except Exception as e:
         prediction_logger.save_logs(
