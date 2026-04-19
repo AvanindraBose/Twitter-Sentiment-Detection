@@ -8,20 +8,34 @@
 </head>
 <body>
   <div class="page-wrapper">
- 
     <nav class="topnav">
-      <span class="nav-brand">Sentiment AI</span>
-      <form action="/auth/logout" method="POST">
-        <button type="submit" class="btn-logout">&#x2192; Sign out</button>
-      </form>
+      <a href="/" class="nav-brand">Sentiment AI</a>
+      <div class="nav-actions">
+        <a href="/auth/login" class="btn-nav-secondary">Sign in</a>
+        <a href="/auth/signup" class="btn-nav-primary">Sign up</a>
+        <form action="/auth/logout" method="POST">
+          <button type="submit" class="btn-logout">&#x2192; Sign out</button>
+        </form>
+      </div>
     </nav>
- 
+
     <header class="site-header">
       <span class="eyebrow">NLP · Emotion AI</span>
       <h1>Twitter Sentiment<br>Detection</h1>
-      <p>Analyse the emotional tone of any tweet instantly.</p>
+      <p>A server-rendered app where authentication can stay simple: sign up, sign in, get a cookie, and use protected pages.</p>
     </header>
- 
+
+    <section class="auth-overview">
+      <div class="auth-overview-card">
+        <p class="auth-title">Big picture</p>
+        <p class="auth-copy">Your frontend only needs links and forms. The backend should decide whether the user can see this page, submit predictions, or be redirected to sign in.</p>
+      </div>
+      <div class="auth-overview-card">
+        <p class="auth-title">Suggested flow</p>
+        <p class="auth-copy">`/auth/signup` creates the user, `/auth/login` sets the cookie, `/` becomes protected, and `/auth/logout` clears the cookie.</p>
+      </div>
+    </section>
+
     <div class="card">
       <form action="/predict" method="POST">
         <label class="form-label" for="tweet">Your tweet</label>
@@ -29,8 +43,9 @@
           id="tweet"
           name="text"
           rows="5"
-          placeholder="e.g. I can't believe how amazing today has been…"
+          placeholder="e.g. I can't believe how amazing today has been..."
         ></textarea>
+        <p class="form-help">Once backend auth is wired up, this form should only be available to signed-in users.</p>
         <button type="submit" class="btn-predict">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -39,11 +54,10 @@
         </button>
       </form>
     </div>
- 
+
     <footer class="site-footer">
       Powered by a fine-tuned ML model &mdash; results are indicative only.
     </footer>
- 
   </div>
 </body>
 </html>

@@ -3,20 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign Up — Twitter Sentiment Detection</title>
+  <title>Sign Up - Twitter Sentiment Detection</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <div class="page-wrapper">
+    <nav class="topnav auth-topnav">
+      <a href="/" class="nav-link">Home</a>
+      <div class="nav-actions">
+        <a href="/auth/login" class="btn-nav-secondary">Sign in</a>
+      </div>
+    </nav>
 
     <header class="site-header">
       <span class="eyebrow">Create Account</span>
       <h1>Join the Platform</h1>
-      <p>Start analysing tweet sentiment in seconds.</p>
+      <p>Create the account here, then let the backend take care of login and redirects.</p>
     </header>
 
     <div class="card">
-
       {% if error %}
         <div class="flash flash-error">{{ error }}</div>
       {% endif %}
@@ -25,8 +30,12 @@
         <div class="flash flash-success">{{ success }}</div>
       {% endif %}
 
-      <form action="/auth/signup" method="POST">
+      <div class="auth-intro">
+        <p class="auth-title">What this page does</p>
+        <p class="auth-copy">The frontend only gathers the signup data. Your backend should validate the form fields, create the user, and then redirect them to sign in or directly into the protected experience.</p>
+      </div>
 
+      <form action="/auth/signup" method="POST">
         <div class="form-group">
           <label class="form-label" for="username">Username</label>
           <input
@@ -35,6 +44,8 @@
             id="username"
             name="username"
             placeholder="e.g. avanindra"
+            autocomplete="username"
+            minlength="3"
             required
           />
         </div>
@@ -47,6 +58,7 @@
             id="email"
             name="email"
             placeholder="you@example.com"
+            autocomplete="email"
             required
           />
         </div>
@@ -58,27 +70,28 @@
             type="password"
             id="password"
             name="password"
-            placeholder="Min. 8 characters"
+            placeholder="At least 8 characters"
+            autocomplete="new-password"
+            minlength="8"
+            pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&amp;*(),.?&quot;:{}|&lt;&gt;]).{8,}"
             required
           />
+          <p class="form-help">Use at least 8 characters, including uppercase, lowercase, a number, and a special character.</p>
         </div>
 
         <button type="submit" class="btn-auth">
           Create Account
         </button>
-
       </form>
 
       <div class="auth-switch">
         Already have an account? <a href="/auth/login">Sign in</a>
       </div>
-
     </div>
 
     <footer class="site-footer">
-      Your data is encrypted and never shared.
+      Plain HTML auth works best when the backend accepts form fields and returns redirects.
     </footer>
-
   </div>
 </body>
 </html>

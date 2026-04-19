@@ -329,6 +329,7 @@ textarea:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   padding: 0.75rem 1.25rem;
   background: var(--surface);
   border: 0.5px solid var(--border);
@@ -336,10 +337,51 @@ textarea:focus {
   margin-bottom: 2rem;
 }
 
-.topnav .nav-brand {
+.topnav .nav-brand,
+.topnav .nav-link {
   font-family: var(--font-display);
   font-size: 15px;
   color: var(--text-primary);
+  text-decoration: none;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-nav-primary,
+.btn-nav-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-nav-primary {
+  background: var(--accent);
+  color: #0a0a0c;
+  border: none;
+}
+
+.btn-nav-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 0.5px solid var(--border);
+}
+
+.btn-nav-primary:hover,
+.btn-nav-secondary:hover {
+  opacity: 0.9;
 }
 
 .topnav .btn-logout {
@@ -362,4 +404,72 @@ textarea:focus {
 .topnav .btn-logout:hover {
   color: #ff5f5f;
   border-color: rgba(255,95,95,0.3);
+}
+
+.auth-topnav {
+  margin-bottom: 1.5rem;
+}
+
+.auth-intro,
+.auth-overview-card {
+  background: var(--surface-2);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1rem 0.95rem;
+}
+
+.auth-intro {
+  margin-bottom: 1.25rem;
+}
+
+.auth-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+
+.auth-copy {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.auth-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-help {
+  margin-top: 0.55rem;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .page-wrapper {
+    max-width: 100%;
+  }
+
+  .topnav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nav-actions {
+    justify-content: stretch;
+  }
+
+  .btn-nav-primary,
+  .btn-nav-secondary,
+  .topnav .btn-logout {
+    width: 100%;
+  }
+
+  .auth-overview {
+    grid-template-columns: 1fr;
+  }
 }
