@@ -102,7 +102,7 @@ def get_current_user(
 
     payload = verify_refresh_token(refresh_token)
     if payload is None:
-        auth_logger.save_logs("User ID Not Found in the Cookies",log_level="error")
+        auth_logger.save_logs("Payload is None",log_level="error")
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
             detail = "Invalid or expired access token"
@@ -110,7 +110,7 @@ def get_current_user(
     user_id = payload.get("sub")
     
     if not user_id : 
-
+        auth_logger.save_logs("User ID Not Found in the Payload",log_level="error")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid session"
