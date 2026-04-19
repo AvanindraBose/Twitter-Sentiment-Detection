@@ -3,8 +3,9 @@ from fastapi import APIRouter,HTTPException,status,Request,Form
 from backend.schema.model_schema import RequestSchema,ResponseSchema
 from backend.services.model_service import predict_sentiment
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse,RedirectResponse
 from backend.logging_fastapi.logger_api import prediction_logger
+from backend.core.dependencies import get_current_user
 
 router = APIRouter(tags=["Predict"])
 templates = Jinja2Templates(
@@ -17,6 +18,15 @@ def prediction(request:Request , text:str = Form(...)):
     # Validate the input data -> Handled by Pydantic
     # Preprocess the input data using vectorizer
     # Make predictions using the loaded model
+    try:
+        user_id = get_current_user(request)
+    except Exception as e:
+        prediction_logger.save_logs(f"Cookies Related Issue {str(e)}")
+        return RedirectResponse(
+            url = "/auth/login",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    
     try:
         prediction_logger.save_logs(f"Received prediction request.", log_level='info')
         data = {"text" : text}
