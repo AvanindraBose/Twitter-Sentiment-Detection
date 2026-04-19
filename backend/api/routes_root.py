@@ -18,7 +18,7 @@ def root(request: Request):
             url = "/auth/login",
             status_code=303
         )
-    
+    auth_logger.save_logs("Login Successfull Users can now see index page")
     return templates.TemplateResponse(
         request=request,
         name = "index.html",
