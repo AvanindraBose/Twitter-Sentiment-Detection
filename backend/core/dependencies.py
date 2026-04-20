@@ -13,44 +13,17 @@ from typing import AsyncGenerator
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
+from backend.loader.artifacts_loader import load_artifacts
+from backend.loader.redis_loader import load_redis_client
 
 load_dotenv()
 
-try:
-    mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
-    dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
-    client = MlflowClient()
-except Exception as e:
-    prediction_logger.save_logs(f"Error occurred while initializing MLflow: {str(e)}", log_level="error")
-
-_model,_vectorizer = None,None
-
-def load_artifacts() -> tuple:
-    global _model, _vectorizer
-    if _model is not None and _vectorizer is not None:
-        prediction_logger.save_logs("Model and vectorizer already loaded, using cached versions.", log_level="info")
-        return (_model, _vectorizer)
-    
-    try:
-        prod_model = client.get_latest_versions("model", stages=["Production"])[0]
-        run_id = prod_model.run_id
-        model_uri = f"models:/model/{prod_model.version}"
-
-        _model = mlflow.pyfunc.load_model(model_uri)
-
-        vectorizer_uri = f"runs:/{run_id}/vectorizer.joblib"
-        local_path = mlflow.artifacts.download_artifacts(vectorizer_uri)
-
-        _vectorizer = joblib.load(local_path)
-        prediction_logger.save_logs("Model and vectorizer loaded successfully.", log_level="info")
-    except Exception as e:
-        prediction_logger.save_logs(f"Error occurred while loading artifacts: {str(e)}", log_level="error")
-        raise e
-
-    return (_model, _vectorizer)
-
-REDIS_URL = os.getenv("REDIS_URL")
-security = HTTPBearer()
+# try:
+#     mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
+#     dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
+#     client = MlflowClient()
+# except Exception as e:
+#     prediction_logger.save_logs(f"Error occurred while initializing MLflow: {str(e)}", log_level="error")
 
 def get_api_key(api_key:str = Header(...)):
     if api_key != settings.API_KEY:
@@ -134,49 +107,16 @@ def get_current_user(
 #             detail="Service Temporarily Unavailable",
 #         )
 
+# loading Model
 
-redis_client = None
+def get_artifacts():
+    return load_artifacts()
 
-def get_redis_client() -> Redis:
-    global redis_client
+# loading Redis
 
-    if redis_client:
-        prediction_logger.save_logs("Using cached Redis client", log_level="info")
-        return redis_client
-
-    try:
-        prediction_logger.save_logs(
-            "Attempting to connect to Redis",
-            log_level="info"
-        )
-
-        client = Redis.from_url(
-            REDIS_URL,
-            decode_responses=True,
-            socket_timeout=2,
-            socket_connect_timeout=2,
-        )
-
-        client.ping()
-
-        prediction_logger.save_logs(
-            "Successfully connected to Redis",
-            log_level="info"
-        )
-
-        redis_client = client
-        return redis_client
-
-    except Exception as e:
-        prediction_logger.save_logs(
-            f"Failed to connect to Redis | Error: {str(e)}",
-            log_level="error"
-        )
-
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Service Temporarily Unavailable",
-        )
+async def get_redis_client() -> Redis:
+    return await load_redis_client()
+    
     
 def get_refresh_user_id(request: Request) -> str:
     # print("Cookies:", request.cookies) 
