@@ -6,7 +6,7 @@ import nltk
 import string
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from backend.core.dependencies import load_artifacts
+from backend.core.dependencies import get_artifacts
 from backend.logging_fastapi.logger_api import prediction_logger
 from backend.core.security import make_cache_key
 from backend.cache.redis_model_cache import get_cached_prediction,set_cached_prediction
@@ -101,7 +101,7 @@ async def predict_sentiment(data: dict) -> dict:
         raise
 
     try:
-        model, vectorizer = load_artifacts()
+        model, vectorizer = get_artifacts()
         prediction_logger.save_logs("Model and vectorizer loaded", "info")
 
     except Exception as e:

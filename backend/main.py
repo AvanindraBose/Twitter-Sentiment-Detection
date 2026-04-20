@@ -5,6 +5,7 @@ from backend.middlewares.response_logger import ResponseLoggerMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend.logging_fastapi.logger_api import auth_logger
 from contextlib import asynccontextmanager
+from backend.loader.redis_loader import close_redis_client
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
+    await close_redis_client()
     await engine.dispose()
     auth_logger.save_logs("Database Connection Closed successfully.")
 

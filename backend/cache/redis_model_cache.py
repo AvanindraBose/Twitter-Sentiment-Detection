@@ -4,7 +4,7 @@ from backend.logging_fastapi.logger_api import prediction_logger
 
 async def get_cached_prediction(key:str):
     try:
-        redis_client = get_redis_client()
+        redis_client = await get_redis_client()
         value = await redis_client.get(key)
         return json.loads(value) if value else None
     except Exception as e:
@@ -13,7 +13,7 @@ async def get_cached_prediction(key:str):
 
 async def set_cached_prediction(key:str,value:dict , ttl:int = 300):
     try:
-        redis_client = get_redis_client()
+        redis_client = await get_redis_client()
         await redis_client.setex(key,ttl,json.dumps(value))
         prediction_logger.save_logs(f"Cached prediction set with key", log_level="info")
     except Exception as e:
