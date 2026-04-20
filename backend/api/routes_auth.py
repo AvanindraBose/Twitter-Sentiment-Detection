@@ -17,6 +17,8 @@ from pydantic import ValidationError
 router = APIRouter(prefix="/auth",tags=["Auth"])
 templates = Jinja2Templates(directory="backend/templates")
 
+ACCESS_COOKIE_NAME = "access_token"
+REFRESH_COOKIE_NAME = "refresh_token"
 
 @router.get("/signup",response_class=HTMLResponse)
 async def signup_page(request:Request):
@@ -231,29 +233,43 @@ async def login(request:Request ,
             url = "/",
             status_code= status.HTTP_303_SEE_OTHER
     )
-    max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+    refresh_max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+
     response.set_cookie(
-        key = "refresh_token",
+        key = ACCESS_COOKIE_NAME,
+        value = access_token,
+        httponly=True,
+        secure = False,
+        samesite= "lax",
+        path="/"
+    )
+
+    response.set_cookie(
+        key = REFRESH_COOKIE_NAME,
         value = refresh_token,
         httponly=True,
         secure=False,
         samesite="lax",
         path = "/",
-        max_age = max_age
+        max_age = refresh_max_age
     )
     return response
 
 
 @router.post("/refresh")
 async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_db), _= Depends(refresh_rate_limiter)):
-    refresh_token = request.cookies.get("refresh_token")
+
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+
     if not refresh_token:
      auth_logger.save_logs(f"Token Refresh Failed - No refresh token provided", log_level="error")
      raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Refresh token missing"
     )
+
     payload = verify_refresh_token(refresh_token)
+
 # Using Nested Dependecies
     if payload is None :
         auth_logger.save_logs(f"Token Refresh Failed - Invalid or expired refresh token", log_level="error")
@@ -263,7 +279,6 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         )
     
     user_id = payload["sub"]
-    # refresh_rate_limiter(user_id)
 
     try:
         # BEGIN TRANSACTION
@@ -337,16 +352,25 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         }
     )
 
-    max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+    refresh_max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+    
+    response.set_cookie(
+        key = ACCESS_COOKIE_NAME,
+        value = new_access_token,
+        httponly=True,
+        secure = False,
+        samesite="lax",
+        path="/"
+    )
 
     response.set_cookie(
-        key="refresh_token",
+        key=REFRESH_COOKIE_NAME,
         value=new_refresh_token,
         httponly=True,
         secure=False,
         samesite="lax",
         path="/",
-        max_age=max_age,
+        max_age=refresh_max_age,
     )
 
     return response
@@ -356,7 +380,7 @@ async def logout(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    refresh_token = request.cookies.get("refresh_token")
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
 
     if refresh_token:
         payload = verify_refresh_token(refresh_token)
@@ -396,7 +420,15 @@ async def logout(
     )
     
     response.delete_cookie(
-        key="refresh_token",
+        key = REFRESH_COOKIE_NAME,
+        path = "/",
+        secure=False,
+        httponly=True,
+        samesite="lax"
+    )
+
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
         path="/",
         secure=False,
         httponly=True,

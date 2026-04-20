@@ -1,11 +1,6 @@
-import mlflow
-import dagshub
-import os
-import joblib
-from mlflow.tracking import MlflowClient
 from backend.logging_fastapi.logger_api import prediction_logger,auth_logger
-from fastapi import Header,HTTPException,status,Depends,Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Header,HTTPException,status,Request
+# from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.core.config import settings
 from backend.core.security import verify_access_token , verify_refresh_token
 from backend.core.database import AsyncSessionLocal
@@ -61,19 +56,17 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     
 #     return payload["sub"]
 
-def get_current_user(
-        request:Request
-):
-    refresh_token = request.cookies.get("refresh_token")
+def get_current_user(request:Request) -> str:
+    access_token = request.cookies.get("access_token")
 
-    if not refresh_token:
-        auth_logger.save_logs("Refresh Token Not Found In the Cookies",log_level="error")
+    if not access_token:
+        auth_logger.save_logs("Access Token Not Found In the Cookies",log_level="error")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not Authenticated"
         )
 
-    payload = verify_refresh_token(refresh_token)
+    payload = verify_access_token(access_token)
     if payload is None:
         auth_logger.save_logs("Payload is None",log_level="error")
         raise HTTPException(
