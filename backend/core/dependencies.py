@@ -32,12 +32,12 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         try:
             yield session
             auth_logger.save_logs("Database session initialized successfully", log_level="info")
-        except Exception as e:
-            auth_logger.save_logs(f"Error occurred while initializing database session: {str(e)}", log_level="error")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database connection error"
-            )
+        # except Exception as e:
+        #     auth_logger.save_logs(f"Error occurred while initializing database session: {str(e)}", log_level="error")
+        #     raise HTTPException(
+        #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #         detail="Database connection error"
+        #     )
         finally:
             await session.close()
             auth_logger.save_logs("Database session closed", log_level="info")
@@ -56,33 +56,49 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     
 #     return payload["sub"]
 
-def get_current_user(request:Request) -> str:
+def get_current_user(request: Request) -> str:
     access_token = request.cookies.get("access_token")
 
     if not access_token:
-        auth_logger.save_logs("Access Token Not Found In the Cookies",log_level="error")
+        auth_logger.save_logs(
+            "Access token not found in cookies",
+            log_level="warning"
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not Authenticated"
+            detail="missing_access_token"
         )
 
-    payload = verify_access_token(access_token)
+    token_result = verify_access_token(access_token)
+    payload = token_result["payload"]
+    error = token_result["error"]
+
     if payload is None:
-        auth_logger.save_logs("Payload is None",log_level="error")
-        raise HTTPException(
-            status_code = status.HTTP_401_UNAUTHORIZED,
-            detail = "Invalid or expired access token"
+        auth_logger.save_logs(
+            f"Access token verification failed: {error}",
+            log_level="warning"
         )
-    user_id = payload.get("sub")
-    
-    if not user_id : 
-        auth_logger.save_logs("User ID Not Found in the Payload",log_level="error")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid session"
+            detail=error
         )
-    
+
+    user_id = payload.get("sub")
+
+    if not user_id:
+        auth_logger.save_logs(
+            "User ID not found in access token payload",
+            log_level="error"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid_session"
+        )
+
     return user_id
+
+
+
 
 # def get_redis_client() -> Redis:
 #     try: 

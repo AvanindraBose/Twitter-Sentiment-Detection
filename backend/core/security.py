@@ -3,7 +3,7 @@ import os
 import bcrypt
 import hashlib
 from datetime import datetime, timezone ,timedelta
-from jose import JWTError , jwt
+from jose import JWTError , jwt , ExpiredSignatureError
 from backend.core.config import settings
 from backend.logging_fastapi.logger_api import auth_logger
 
@@ -82,7 +82,7 @@ def create_refresh_tokens(user_id:str):
 #     except JWTError:
 #         return None
 
-def verify_access_token(token: str):
+def verify_access_token(token: str) -> dict:
     try:
         payload = jwt.decode(
             token,
@@ -91,16 +91,45 @@ def verify_access_token(token: str):
         )
 
         if payload.get("token_type") != "access":
-            auth_logger.save_logs(f"Invalid access token type: {payload.get('token_type')}", log_level="warning")
-            return None
+            auth_logger.save_logs(
+                f"Invalid access token type: {payload.get('token_type')}",
+                log_level="warning"
+            )
+            return {
+                "payload": None,
+                "error": "invalid_token_type"
+            }
 
-        return payload
+        return {
+            "payload": payload,
+            "error": None
+        }
+
+    except ExpiredSignatureError:
+        auth_logger.save_logs(
+            "Access token expired",
+            log_level="warning"
+        )
+        return {
+            "payload": None,
+            "error": "expired"
+        }
+
+    except JWTError as e:
+        auth_logger.save_logs(
+            f"JWTError while verifying access token: {str(e)}",
+            log_level="error"
+        )
+        return {
+            "payload": None,
+            "error": "invalid"
+        }
 
     except JWTError:
         auth_logger.save_logs(f"JWTError while verifying access token: {str(JWTError)}", log_level="error")
         return None
 
-def verify_refresh_token(token: str):
+def verify_refresh_token(token: str) -> dict:
     try:
         payload = jwt.decode(
             token,
@@ -109,14 +138,40 @@ def verify_refresh_token(token: str):
         )
 
         if payload.get("token_type") != "refresh":
-            auth_logger.save_logs(f"Invalid refresh token type: {payload.get('token_type')}", log_level="warning")
-            return None
+            auth_logger.save_logs(
+                f"Invalid refresh token type: {payload.get('token_type')}",
+                log_level="warning"
+            )
+            return {
+                "payload": None,
+                "error": "invalid_token_type"
+            }
 
-        return payload
+        return {
+            "payload": payload,
+            "error": None
+        }
 
-    except JWTError:
-        auth_logger.save_logs(f"JWTError while verifying refresh token: {str(JWTError)}", log_level="error")
-        return None
+    except ExpiredSignatureError:
+        auth_logger.save_logs(
+            "Refresh token expired",
+            log_level="warning"
+        )
+        return {
+            "payload": None,
+            "error": "expired"
+        }
+
+    except JWTError as e:
+        auth_logger.save_logs(
+            f"JWTError while verifying refresh token: {str(e)}",
+            log_level="error"
+        )
+        return {
+            "payload": None,
+            "error": "invalid"
+        }
+
 
 def hash_password(password:str)-> str:
     return bcrypt.hashpw(
