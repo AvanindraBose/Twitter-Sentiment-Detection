@@ -256,27 +256,43 @@ async def login(request:Request ,
     return response
 
 
-@router.post("/refresh")
+@router.get("/refresh")
 async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_db), _= Depends(refresh_rate_limiter)):
+
+    next_url = request.query_params.get("next","/")
+
+    if not next_url.startswith("/"):
+        next_url = "/"
 
     refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
 
     if not refresh_token:
      auth_logger.save_logs(f"Token Refresh Failed - No refresh token provided", log_level="error")
-     raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Refresh token missing"
-    )
+     return RedirectResponse(
+         url = "/auth/login",
+         status_code=status.HTTP_303_SEE_OTHER
+     )
+    #  raise HTTPException(
+    #     status_code=status.HTTP_401_UNAUTHORIZED,
+    #     detail="Refresh token missing"
+    # )
 
     payload = verify_refresh_token(refresh_token)
 
 # Using Nested Dependecies
     if payload is None :
         auth_logger.save_logs(f"Token Refresh Failed - Invalid or expired refresh token", log_level="error")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail = "Invalid or expired refresh token"
+        response = RedirectResponse(
+            url="/auth/login",
+            status_code=status.HTTP_303_SEE_OTHER
         )
+        response.delete_cookie(key=ACCESS_COOKIE_NAME, path="/")
+        response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
+        return response
+        # raise HTTPException(
+        #     status_code=status.HTTP_401_UNAUTHORIZED,
+        #     detail = "Invalid or expired refresh token"
+        # )
     
     user_id = payload["sub"]
 
@@ -294,10 +310,17 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
 
         if not db_token:
             auth_logger.save_logs(f"Token Refresh Failed - No token found in DB for user", log_level="error")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Refresh token not found. Please login again",
+            response = RedirectResponse(
+                url="/auth/login",
+                status_code=status.HTTP_303_SEE_OTHER
             )
+            response.delete_cookie(key=ACCESS_COOKIE_NAME, path="/")
+            response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
+            return response
+            # raise HTTPException(
+            #     status_code=status.HTTP_401_UNAUTHORIZED,
+            #     detail="Refresh token not found. Please login again",
+            # )
         
         is_valid_token = await run_in_threadpool(
             verify_hashed_refresh_token,
@@ -307,17 +330,31 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
 
         if not is_valid_token:
             auth_logger.save_logs(f"Token Refresh Failed - Refresh token does not match DB record", log_level="error")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token",
+            response = RedirectResponse(
+                url="/auth/login",
+                status_code=status.HTTP_303_SEE_OTHER
             )
+            response.delete_cookie(key=ACCESS_COOKIE_NAME, path="/")
+            response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
+            return response
+            # raise HTTPException(
+            #     status_code=status.HTTP_401_UNAUTHORIZED,
+            #     detail="Invalid refresh token",
+            # )
 
         if db_token.expires_at < datetime.now(timezone.utc):
             auth_logger.save_logs(f"Token Refresh Failed - Refresh token expired for user", log_level="error")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Refresh token expired",
+            response = RedirectResponse(
+                url="/auth/login",
+                status_code=status.HTTP_303_SEE_OTHER
             )
+            response.delete_cookie(key=ACCESS_COOKIE_NAME, path="/")
+            response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
+            return response
+            # raise HTTPException(
+            #     status_code=status.HTTP_401_UNAUTHORIZED,
+            #     detail="Refresh token expired",
+            # )
 
         # ROTATE TOKENS
         new_access_token = create_access_tokens(user_id)
@@ -335,21 +372,22 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
 
     except HTTPException:
         await db.rollback()
-        raise
-
-    except Exception:
-        await db.rollback()
-        auth_logger.save_logs(f"Token Refresh Failed - Error occurred while refreshing tokens for user", log_level="error")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not refresh tokens",
+        return RedirectResponse(
+            url="/auth/login",
+            status_code= status.HTTP_303_SEE_OTHER
         )
 
-    response = JSONResponse(
-        content={
-            "access_token": new_access_token,
-            "token_type": "bearer",
-        }
+    # except Exception:
+    #     await db.rollback()
+    #     auth_logger.save_logs(f"Token Refresh Failed - Error occurred while refreshing tokens for user", log_level="error")
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail="Could not refresh tokens",
+    #     )
+
+    response = RedirectResponse(
+        url = next_url,
+        status_code=status.HTTP_303_SEE_OTHER
     )
 
     refresh_max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
@@ -420,7 +458,7 @@ async def logout(
     )
     
     response.delete_cookie(
-        key = REFRESH_COOKIE_NAME,
+        key = ACCESS_COOKIE_NAME,
         path = "/",
         secure=False,
         httponly=True,
