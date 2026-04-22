@@ -233,7 +233,7 @@ async def login(request:Request ,
             url = "/",
             status_code= status.HTTP_303_SEE_OTHER
     )
-    refresh_max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+    # refresh_max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
 
     response.set_cookie(
         key = ACCESS_COOKIE_NAME,
@@ -250,15 +250,15 @@ async def login(request:Request ,
         httponly=True,
         secure=False,
         samesite="lax",
-        path = "/",
-        max_age = refresh_max_age
+        path = "/"
+        # max_age = refresh_max_age
     )
     return response
 
 
 @router.get("/refresh")
 async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_db), _= Depends(refresh_rate_limiter)):
-
+    auth_logger.save_logs("Hit Refresh Endpoint" , log_level="info")
     next_url = request.query_params.get("next","/")
 
     if not next_url.startswith("/"):
@@ -277,7 +277,9 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
     #     detail="Refresh token missing"
     # )
 
-    payload = verify_refresh_token(refresh_token)
+    token_result = verify_refresh_token(refresh_token)
+    payload = token_result.get("payload")
+    error = token_result.get("error")
 
 # Using Nested Dependecies
     if payload is None :
@@ -294,7 +296,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         #     detail = "Invalid or expired refresh token"
         # )
     
-    user_id = payload["sub"]
+    user_id = payload.get("sub")
 
     try:
         # BEGIN TRANSACTION
@@ -390,7 +392,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         status_code=status.HTTP_303_SEE_OTHER
     )
 
-    refresh_max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+    # refresh_max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
     
     response.set_cookie(
         key = ACCESS_COOKIE_NAME,
@@ -407,8 +409,8 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         httponly=True,
         secure=False,
         samesite="lax",
-        path="/",
-        max_age=refresh_max_age,
+        path="/"
+        # max_age=refresh_max_age,
     )
 
     return response

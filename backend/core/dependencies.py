@@ -141,11 +141,13 @@ def get_refresh_user_id(request: Request) -> str:
             detail="Invalid or expired refresh token"
         )
 
-    payload = verify_refresh_token(refresh_token)
+    token_result = verify_refresh_token(refresh_token)
+    payload = token_result["payload"]
+    error = token_result["error"]
 
     if not payload:
         auth_logger.save_logs(
-            "Invalid refresh token received",
+            f"{error}",
             log_level="warning"
         )
         raise HTTPException(

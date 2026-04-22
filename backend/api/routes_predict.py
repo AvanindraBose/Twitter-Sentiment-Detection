@@ -20,6 +20,7 @@ async def prediction(request: Request, text: str = Form(...)):
         )
 
         refresh_token = request.cookies.get("refresh_token")
+        print(refresh_token)
 
         if e.detail == "expired" and refresh_token:
             prediction_logger.save_logs(
