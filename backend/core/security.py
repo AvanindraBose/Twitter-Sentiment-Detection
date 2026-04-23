@@ -54,7 +54,7 @@ def create_refresh_tokens(user_id:str):
     try:
         auth_logger.save_logs(f"Creating refresh token for user_id: {user_id}",log_level="info")
         now  = datetime.now(timezone.utc)
-        expires_at = now + timedelta(minutes=REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         payload = {
         "sub":user_id,
         "token_type":"refresh",
