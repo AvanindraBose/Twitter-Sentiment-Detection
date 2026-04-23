@@ -101,7 +101,7 @@ async def predict_sentiment(data: dict) -> dict:
         raise
 
     try:
-        model, vectorizer = get_artifacts()
+        model, vectorizer = await get_artifacts()
         prediction_logger.save_logs("Model and vectorizer loaded", "info")
 
     except Exception as e:

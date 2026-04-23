@@ -119,8 +119,8 @@ def get_current_user(request: Request) -> str:
 
 # loading Model
 
-def get_artifacts():
-    return load_artifacts()
+async def get_artifacts():
+    return await load_artifacts()
 
 # loading Redis
 
