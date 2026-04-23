@@ -19,3 +19,5 @@ health_logger = CustomLogger(
     logger_name="health",
     log_filename=create_log_path("Health")
 )
+
+health_logger.set_log_level(level=logging.INFO)

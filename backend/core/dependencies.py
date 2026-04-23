@@ -1,4 +1,4 @@
-from backend.logging_fastapi.logger_api import prediction_logger,auth_logger
+from backend.logging_fastapi.logger_api import health_logger,auth_logger
 from fastapi import Header,HTTPException,status,Request
 # from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.core.config import settings
@@ -22,6 +22,7 @@ load_dotenv()
 
 def get_api_key(api_key:str = Header(...)):
     if api_key != settings.API_KEY:
+        health_logger.save_logs("Invalid API Key" , log_level='Warning')
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API Key"
