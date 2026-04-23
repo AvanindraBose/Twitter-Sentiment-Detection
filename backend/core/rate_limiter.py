@@ -49,6 +49,8 @@ async def login_rate_limiter(request:Request , redis : Redis = Depends(get_redis
 async def refresh_rate_limiter(user_id:str = Depends(get_refresh_user_id) , redis : Redis = Depends(get_redis_client)):
     try :
         
+        if not user_id :
+            return
         key = f"rate:refresh:{user_id}"
         current_count = await redis.get(key)
         # redis_client returns string values

@@ -150,10 +150,7 @@ def get_refresh_user_id(request: Request) -> str:
             f"{error}",
             log_level="warning"
         )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token"
-        )
+        return None
 
     user_id = payload.get("sub")
 
@@ -162,9 +159,6 @@ def get_refresh_user_id(request: Request) -> str:
             "Refresh token payload missing user_id",
             log_level="warning"
         )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token"
-        )
+        return None
 
     return user_id
