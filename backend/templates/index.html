@@ -19,6 +19,16 @@
       </div>
     </nav>
 
+    {% if error %}
+  <div class="flash flash-error flash-banner" id="error-banner">
+    <div class="flash-banner-content">
+      <span class="flash-icon">&#10006;</span>
+      <span>{{ error }}</span>
+    </div>
+    <button type="button" class="flash-close" id="close-banner" aria-label="Dismiss error">&times;</button>
+  </div>
+{% endif %}
+
     <header class="site-header">
       <span class="eyebrow">NLP · Emotion AI</span>
       <h1>Twitter Sentiment<br>Detection</h1>
@@ -59,5 +69,15 @@
       Powered by a fine-tuned ML model &mdash; results are indicative only.
     </footer>
   </div>
+  <script>
+    const closeBannerButton = document.getElementById("close-banner");
+    const errorBanner = document.getElementById("error-banner");
+
+    if (closeBannerButton && errorBanner) {
+      closeBannerButton.addEventListener("click", function () {
+        errorBanner.style.display = "none";
+      });
+    }
+  </script>
 </body>
 </html>

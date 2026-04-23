@@ -61,7 +61,12 @@ async def prediction(request: Request, text: str = Form(...)):
             f"Error occurred while making prediction. Error: {str(e)}",
             log_level="error"
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+        # raise HTTPException(
+        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     detail=str(e)
+        # )
+        return templates.TemplateResponse(
+            request=request,
+            name = "index.html",
+            context = {"error": "Experiencing heavy traffic. Kindly try again later." }
         )
