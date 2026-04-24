@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException,status,Depends,Request,Form
-from fastapi.responses import JSONResponse,RedirectResponse,HTMLResponse
+from fastapi.responses import RedirectResponse,HTMLResponse
 from backend.core.security import create_access_tokens, create_refresh_tokens,verify_refresh_token,verify_password,hash_password,hash_refresh_token,verify_hashed_refresh_token
 from backend.schema.users_auth import UserCreate,UserLogin
 from backend.core.dependencies import get_db
