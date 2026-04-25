@@ -30,17 +30,21 @@ async def signup_page(request:Request):
 @router.get("/login",response_class=HTMLResponse)
 async def login_page(request:Request):
     success = None
+    info = None
 
     if request.query_params.get("signup") == "success":
         success = "Account created successfully. Please sign in."
 
     if request.query_params.get("logout") == "success":
         success = "You have been signed out successfully."
+
+    if request.query_params.get("session") == "expired":
+        info = "Your session expired. Please log in again."
     
     return templates.TemplateResponse(
     request=request,
     name="login.html",
-    context={"success": success}
+    context={"success": success, "info": info}
     )
 
 @router.post("/signup",response_class=HTMLResponse)
@@ -230,7 +234,7 @@ async def login(request:Request ,
     #     }
     # )
     response = RedirectResponse(
-            url = "/",
+            url = "/dashboard",
             status_code= status.HTTP_303_SEE_OTHER
     )
     # refresh_max_age = int((expires_at - datetime.now(timezone.utc)).total_seconds())
@@ -269,7 +273,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
     if not refresh_token:
      auth_logger.save_logs(f"Token Refresh Failed - No refresh token provided", log_level="error")
      return RedirectResponse(
-         url = "/auth/login",
+         url = "/auth/login?session=expired",
          status_code=status.HTTP_303_SEE_OTHER
      )
     #  raise HTTPException(
@@ -285,7 +289,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
     if payload is None :
         auth_logger.save_logs(f"Token Refresh Failed - Invalid or expired refresh token", log_level="error")
         response = RedirectResponse(
-            url="/auth/login",
+            url="/auth/login?session=expired",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response.delete_cookie(key=ACCESS_COOKIE_NAME, path="/")
@@ -313,7 +317,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         if not db_token:
             auth_logger.save_logs(f"Token Refresh Failed - No token found in DB for user", log_level="error")
             response = RedirectResponse(
-                url="/auth/login",
+                url="/auth/login?session=expired",
                 status_code=status.HTTP_303_SEE_OTHER
             )
             response.delete_cookie(key=ACCESS_COOKIE_NAME, path="/")
@@ -333,7 +337,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         if not is_valid_token:
             auth_logger.save_logs(f"Token Refresh Failed - Refresh token does not match DB record", log_level="error")
             response = RedirectResponse(
-                url="/auth/login",
+                url="/auth/login?session=expired",
                 status_code=status.HTTP_303_SEE_OTHER
             )
             response.delete_cookie(key=ACCESS_COOKIE_NAME, path="/")
@@ -347,7 +351,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
         if db_token.expires_at < datetime.now(timezone.utc):
             auth_logger.save_logs(f"Token Refresh Failed - Refresh token expired for user", log_level="error")
             response = RedirectResponse(
-                url="/auth/login",
+                url="/auth/login?session=expired",
                 status_code=status.HTTP_303_SEE_OTHER
             )
             response.delete_cookie(key=ACCESS_COOKIE_NAME, path="/")
@@ -375,7 +379,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
     except HTTPException:
         await db.rollback()
         return RedirectResponse(
-            url="/auth/login",
+            url="/auth/login?session=expired",
             status_code= status.HTTP_303_SEE_OTHER
         )
 
@@ -426,7 +430,7 @@ async def logout(
         payload = verify_refresh_token(refresh_token)
         
         if payload:
-            user_id = payload["sub"]
+            user_id = payload.get("sub")
             
             try:
                 # Find and delete refresh token
@@ -455,7 +459,7 @@ async def logout(
 
     # Always clear the cookie and return success (idempotent)
     response = RedirectResponse(
-        url = "/auth/login?logout=success",
+        url = "/?logout=success",
         status_code=status.HTTP_303_SEE_OTHER
     )
     

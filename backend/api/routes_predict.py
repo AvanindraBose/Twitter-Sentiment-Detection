@@ -28,12 +28,12 @@ async def prediction(request: Request, text: str = Form(...)):
                 log_level="info"
             )
             return RedirectResponse(
-                url="/auth/refresh?next=/",
+                url="/auth/refresh?next=/dashboard",
                 status_code=status.HTTP_303_SEE_OTHER
             )
 
         return RedirectResponse(
-            url="/auth/login",
+            url="/auth/login?session=expired",
             status_code=status.HTTP_303_SEE_OTHER
         )
 
@@ -67,6 +67,6 @@ async def prediction(request: Request, text: str = Form(...)):
         # )
         return templates.TemplateResponse(
             request=request,
-            name = "index.html",
+            name = "dashboard.html",
             context = {"error": "Experiencing heavy traffic. Kindly try again later." }
         )
