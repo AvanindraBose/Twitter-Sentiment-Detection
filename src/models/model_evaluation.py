@@ -11,8 +11,22 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 from datetime import datetime, timezone
 from src.logger_class import CustomLogger, create_log_path
 
-mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
-dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
+# mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
+# dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
+
+dagshub_token = os.getenv("DAGSHUB_PAT")
+if not dagshub_token:
+    raise EnvironmentError("DAGSHUB_PAT environment variable is not set")
+
+os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+dagshub_url = "https://dagshub.com"
+repo_owner = "AvanindraBose"
+repo_name = "Twitter-Sentiment-Detection"
+
+# Set up MLflow tracking URI
+mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}.mlflow')
 
 # logging configuration
 logger = logging.getLogger('model_evaluation')
