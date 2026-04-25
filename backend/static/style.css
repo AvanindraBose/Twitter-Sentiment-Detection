@@ -382,6 +382,43 @@ textarea:focus {
     0 0 0 4px rgba(255, 107, 44, 0.12);
 }
 
+.password-field {
+  position: relative;
+}
+
+.password-field .form-input {
+  padding-right: 58px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 107, 44, 0.12);
+  color: var(--accent-deep);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.password-toggle svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+}
+
+.password-toggle:hover {
+  background: rgba(255, 107, 44, 0.2);
+}
+
 textarea {
   min-height: 240px;
   resize: vertical;
