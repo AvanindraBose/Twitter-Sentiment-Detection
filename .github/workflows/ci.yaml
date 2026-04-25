@@ -33,7 +33,7 @@ jobs:
       - name: install dependencies
         working-directory: ${{ github.workspace }}
         run: |
-          uv sync
+          uv sync --extra test
 
       - name: run dvc pipeline
         env: 

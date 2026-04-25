@@ -44,8 +44,7 @@ dependencies = [
   # AWS
   "dvc[s3]",
   "awscli",
-  
-
+   
   # NLP
   "nltk",
   "spacy",
@@ -61,6 +60,7 @@ dev = [
     "matplotlib",
     "seaborn",
 ]
+
 test = [
     "coverage",  # testing
     "pytest",  # testing
