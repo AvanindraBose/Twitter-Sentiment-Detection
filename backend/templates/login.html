@@ -7,76 +7,67 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="page-wrapper">
-    <nav class="topnav auth-topnav">
-      <a href="/" class="nav-link">Home</a>
-      <div class="nav-actions">
-        <a href="/auth/signup" class="btn-nav-secondary">Create account</a>
-      </div>
-    </nav>
-
-    <header class="site-header">
-      <span class="eyebrow">Welcome Back</span>
-      <h1>Sign In</h1>
-      <p>Use your account to access the protected sentiment workflow.</p>
-    </header>
-
-    <div class="card">
-      {% if error %}
-        <div class="flash flash-error">{{ error }}</div>
-      {% endif %}
-
-      {% if success %}
-        <div class="flash flash-success">{{ success }}</div>
-      {% endif %}
-
-      <div class="auth-intro">
-        <p class="auth-title">Frontend flow</p>
-        <p class="auth-copy">This page only collects credentials and submits them to the backend. After a successful login, the backend should set the auth cookie and redirect the user to the protected app page.</p>
-      </div>
-
-      <form action="/auth/login" method="POST">
-        <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input
-            class="form-input"
-            type="email"
-            id="email"
-            name="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            required
-          />
+  <div class="page-wrapper auth-shell">
+    <div class="shell">
+      <nav class="topnav auth-topnav">
+        <a href="/" class="nav-link">Sentilytics</a>
+        <div class="nav-actions">
+          <a href="/auth/signup" class="btn-nav-secondary">Sign up</a>
         </div>
+      </nav>
 
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <input
-            class="form-input"
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Your password"
-            autocomplete="current-password"
-            required
-          />
-        </div>
+      <header class="auth-header">
+        <span class="eyebrow">Step 2</span>
+        <h1>Sign in</h1>
+        <p>Continue to the dashboard.</p>
+      </header>
 
-        <p class="form-help">This is a plain HTML form. No JavaScript is needed for the browser to submit it.</p>
+      <main class="auth-layout">
+        <section class="card">
+          {% if error %}
+          <div class="flash flash-error">{{ error }}</div>
+          {% endif %}
 
-        <button type="submit" class="btn-auth">
-          Sign In
-        </button>
-      </form>
+          {% if success %}
+          <div class="flash flash-success">{{ success }}</div>
+          {% endif %}
 
-      <div class="auth-switch">
-        Don't have an account? <a href="/auth/signup">Sign up</a>
-      </div>
+          <form action="/auth/login" method="POST">
+            <div class="form-group">
+              <label class="form-label" for="email">Email</label>
+              <input
+                class="form-input"
+                type="email"
+                id="email"
+                name="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="password">Password</label>
+              <input
+                class="form-input"
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Your password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn-auth">Sign in</button>
+          </form>
+
+          <div class="auth-switch">
+            Don't have an account? <a href="/auth/signup">Sign up</a>
+          </div>
+        </section>
+      </main>
     </div>
-
-    <footer class="site-footer">
-      Keep the frontend simple: form submission, backend validation, cookie, redirect.
-    </footer>
   </div>
 </body>
 </html>

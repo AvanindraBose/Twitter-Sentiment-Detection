@@ -3,42 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Result — Twitter Sentiment Detection</title>
+  <title>Result - Twitter Sentiment Detection</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="page-wrapper">
+  <div class="page-wrapper result-shell">
+    <div class="shell">
+      <nav class="topnav result-topnav">
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+      </nav>
 
-    <header class="site-header">
-      <span class="eyebrow">NLP · Emotion AI</span>
-      <h1>Sentiment Result</h1>
-      <p>Here's what the model detected.</p>
-    </header>
+      <header class="result-header">
+        <span class="eyebrow">Prediction</span>
+        <h1>Result</h1>
+        <p>Your tweet reading is ready.</p>
+      </header>
 
-    <div class="result-card">
-      <p class="result-label">Detected sentiment score</p>
+      <main class="result-layout">
+        <section class="result-card">
+          <p class="result-label">Sentiment</p>
 
-      <div class="sentiment-badge">
-        {% if sentiment == 1 %}
-          Positive &#x2197;
-        {% elif sentiment == 0 %}
-          Negative &#x2198;
-        {% else %}
-          {{ sentiment }}
-        {% endif %}
-      </div>
+          <div class="sentiment-badge {% if sentiment == 1 %}sentiment-positive{% elif sentiment == 0 %}sentiment-negative{% else %}sentiment-neutral{% endif %}">
+            {% if sentiment == 1 %}
+              Positive
+            {% elif sentiment == 0 %}
+              Negative
+            {% else %}
+              {{ sentiment }}
+            {% endif %}
+          </div>
 
-      <p class="sentiment-raw">Raw value: {{ sentiment }}</p>
+          <p class="sentiment-raw">Score: {{ sentiment }}</p>
 
-      <a href="/" class="btn-back">
-        &#8592; Analyse another tweet
-      </a>
+          <a href="/dashboard" class="btn-back">Analyze another tweet</a>
+        </section>
+      </main>
     </div>
-
-    <footer class="site-footer">
-      Powered by a fine-tuned ML model &mdash; results are indicative only.
-    </footer>
-
   </div>
 </body>
 </html>

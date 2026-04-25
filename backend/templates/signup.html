@@ -7,91 +7,84 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="page-wrapper">
-    <nav class="topnav auth-topnav">
-      <a href="/" class="nav-link">Home</a>
-      <div class="nav-actions">
-        <a href="/auth/login" class="btn-nav-secondary">Sign in</a>
-      </div>
-    </nav>
-
-    <header class="site-header">
-      <span class="eyebrow">Create Account</span>
-      <h1>Join the Platform</h1>
-      <p>Create the account here, then let the backend take care of login and redirects.</p>
-    </header>
-
-    <div class="card">
-      {% if error %}
-        <div class="flash flash-error">{{ error }}</div>
-      {% endif %}
-
-      {% if success %}
-        <div class="flash flash-success">{{ success }}</div>
-      {% endif %}
-
-      <div class="auth-intro">
-        <p class="auth-title">What this page does</p>
-        <p class="auth-copy">The frontend only gathers the signup data. Your backend should validate the form fields, create the user, and then redirect them to sign in or directly into the protected experience.</p>
-      </div>
-
-      <form action="/auth/signup" method="POST">
-        <div class="form-group">
-          <label class="form-label" for="username">Username</label>
-          <input
-            class="form-input"
-            type="text"
-            id="username"
-            name="username"
-            placeholder="e.g. avanindra"
-            autocomplete="username"
-            minlength="3"
-            required
-          />
+  <div class="page-wrapper auth-shell">
+    <div class="shell">
+      <nav class="topnav auth-topnav">
+        <a href="/" class="nav-link">Sentilytics</a>
+        <div class="nav-actions">
+          <a href="/auth/login" class="btn-nav-secondary">Sign in</a>
         </div>
+      </nav>
 
-        <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input
-            class="form-input"
-            type="email"
-            id="email"
-            name="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            required
-          />
-        </div>
+      <header class="auth-header">
+        <span class="eyebrow">Step 1</span>
+        <h1>Create account</h1>
+        <p>Start here, then sign in.</p>
+      </header>
 
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <input
-            class="form-input"
-            type="password"
-            id="password"
-            name="password"
-            placeholder="At least 8 characters"
-            autocomplete="new-password"
-            minlength="8"
-            pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&amp;*(),.?&quot;:{}|&lt;&gt;]).{8,}"
-            required
-          />
-          <p class="form-help">Use at least 8 characters, including uppercase, lowercase, a number, and a special character.</p>
-        </div>
+      <main class="auth-layout">
+        <section class="card">
+          {% if error %}
+          <div class="flash flash-error">{{ error }}</div>
+          {% endif %}
 
-        <button type="submit" class="btn-auth">
-          Create Account
-        </button>
-      </form>
+          {% if success %}
+          <div class="flash flash-success">{{ success }}</div>
+          {% endif %}
 
-      <div class="auth-switch">
-        Already have an account? <a href="/auth/login">Sign in</a>
-      </div>
+          <form action="/auth/signup" method="POST">
+            <div class="form-group">
+              <label class="form-label" for="username">Username</label>
+              <input
+                class="form-input"
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Username"
+                autocomplete="username"
+                minlength="3"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="email">Email</label>
+              <input
+                class="form-input"
+                type="email"
+                id="email"
+                name="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="password">Password</label>
+              <input
+                class="form-input"
+                type="password"
+                id="password"
+                name="password"
+                placeholder="At least 8 characters"
+                autocomplete="new-password"
+                minlength="8"
+                pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&amp;*(),.?&quot;:{}|&lt;&gt;]).{8,}"
+                required
+              />
+              <p class="form-help">8+ chars, upper, lower, number, symbol.</p>
+            </div>
+
+            <button type="submit" class="btn-auth">Create account</button>
+          </form>
+
+          <div class="auth-switch">
+            Already have an account? <a href="/auth/login">Sign in</a>
+          </div>
+        </section>
+      </main>
     </div>
-
-    <footer class="site-footer">
-      Plain HTML auth works best when the backend accepts form fields and returns redirects.
-    </footer>
   </div>
 </body>
 </html>

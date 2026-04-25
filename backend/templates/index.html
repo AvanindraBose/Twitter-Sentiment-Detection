@@ -8,74 +8,71 @@
 </head>
 <body>
   <div class="page-wrapper">
-    <nav class="topnav">
-      <a href="/" class="nav-brand">Sentiment AI</a>
-      <div class="nav-actions">
-        <a href="/auth/login" class="btn-nav-secondary">Sign in</a>
-        <a href="/auth/signup" class="btn-nav-primary">Sign up</a>
-        <form action="/auth/logout" method="POST">
-          <button type="submit" class="btn-logout">&#x2192; Sign out</button>
-        </form>
-      </div>
-    </nav>
+    <div class="shell">
+      <nav class="topnav">
+        <a href="/" class="nav-brand">Sentilytics</a>
+        <div class="nav-actions">
+          <a href="/auth/login" class="btn-nav-secondary">Sign in</a>
+          <a href="/auth/signup" class="btn-nav-primary">Sign up</a>
+        </div>
+      </nav>
 
-    {% if error %}
-  <div class="flash flash-error flash-banner" id="error-banner">
-    <div class="flash-banner-content">
-      <span class="flash-icon">&#10006;</span>
-      <span>{{ error }}</span>
+      {% if success %}
+      <div class="flash flash-success flash-banner" id="success-banner">
+        <div class="flash-banner-content">
+          <span class="flash-icon">&#10003;</span>
+          <span>{{ success }}</span>
+        </div>
+        <button type="button" class="flash-close" id="close-success-banner" aria-label="Dismiss success">&times;</button>
+      </div>
+      {% endif %}
+
+      <main class="landing">
+        <section class="landing-hero hero-panel">
+          <header class="site-header">
+            <span class="eyebrow">Twitter sentiment detection</span>
+            <h1>Understand the emotion behind social chatter.</h1>
+            <p>See whether a tweet lands positive or negative in one quick pass.</p>
+          </header>
+
+          <div class="landing-actions">
+            <a href="/auth/signup" class="btn-nav-primary">Get started</a>
+            <a href="/auth/login" class="btn-nav-secondary">I already have an account</a>
+          </div>
+        </section>
+
+        <section class="landing-grid">
+          <article class="info-card">
+            <p class="info-title">What it does</p>
+            <p class="info-copy">Turns tweet text into a fast sentiment prediction through a simple protected workflow.</p>
+          </article>
+
+          <article class="info-card">
+            <p class="info-title">Why it helps</p>
+            <p class="info-copy">Useful for demos, audience monitoring, brand tracking, and quick emotional signal checks.</p>
+          </article>
+
+          <article class="info-card info-card-wide">
+            <p class="info-title">Quick insight</p>
+            <div class="sample-sentiment">
+              <span class="sample-pill sample-positive">Positive</span>
+              <span class="sample-pill sample-negative">Negative</span>
+            </div>
+            <p class="info-copy">Short-form text can shift tone quickly, so a lightweight prediction tool helps spot mood at a glance.</p>
+          </article>
+        </section>
+      </main>
+
+      <footer class="site-footer">Sign up or sign in to start analyzing tweets.</footer>
     </div>
-    <button type="button" class="flash-close" id="close-banner" aria-label="Dismiss error">&times;</button>
-  </div>
-{% endif %}
-
-    <header class="site-header">
-      <span class="eyebrow">NLP · Emotion AI</span>
-      <h1>Twitter Sentiment<br>Detection</h1>
-      <p>A server-rendered app where authentication can stay simple: sign up, sign in, get a cookie, and use protected pages.</p>
-    </header>
-
-    <section class="auth-overview">
-      <div class="auth-overview-card">
-        <p class="auth-title">Big picture</p>
-        <p class="auth-copy">Your frontend only needs links and forms. The backend should decide whether the user can see this page, submit predictions, or be redirected to sign in.</p>
-      </div>
-      <div class="auth-overview-card">
-        <p class="auth-title">Suggested flow</p>
-        <p class="auth-copy">`/auth/signup` creates the user, `/auth/login` sets the cookie, `/` becomes protected, and `/auth/logout` clears the cookie.</p>
-      </div>
-    </section>
-
-    <div class="card">
-      <form action="/predict" method="POST">
-        <label class="form-label" for="tweet">Your tweet</label>
-        <textarea
-          id="tweet"
-          name="text"
-          rows="5"
-          placeholder="e.g. I can't believe how amazing today has been..."
-        ></textarea>
-        <p class="form-help">Once backend auth is wired up, this form should only be available to signed-in users.</p>
-        <button type="submit" class="btn-predict">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          Analyse Sentiment
-        </button>
-      </form>
-    </div>
-
-    <footer class="site-footer">
-      Powered by a fine-tuned ML model &mdash; results are indicative only.
-    </footer>
   </div>
   <script>
-    const closeBannerButton = document.getElementById("close-banner");
-    const errorBanner = document.getElementById("error-banner");
+    const closeSuccessBannerButton = document.getElementById("close-success-banner");
+    const successBanner = document.getElementById("success-banner");
 
-    if (closeBannerButton && errorBanner) {
-      closeBannerButton.addEventListener("click", function () {
-        errorBanner.style.display = "none";
+    if (closeSuccessBannerButton && successBanner) {
+      closeSuccessBannerButton.addEventListener("click", function () {
+        successBanner.style.display = "none";
       });
     }
   </script>
