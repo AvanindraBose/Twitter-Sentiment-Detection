@@ -48,20 +48,20 @@ stages:
       size: 5967
     params:
       params.yaml:
-        feature_engineering.max_features: 500
+        feature_engineering.max_features: 1000
     outs:
     - path: data/processed
       hash: md5
-      md5: eac547401ac7fb90b8d38b64d2e2915e.dir
-      size: 9932491
+      md5: e8e3761878920b886754b3ba8b43f772.dir
+      size: 19835491
       nfiles: 2
   model_building:
     cmd: python src/models/model_building.py
     deps:
     - path: data/processed/train_bow.csv
       hash: md5
-      md5: dba6b0ce98c29930cb9a1d597d0a3113
-      size: 7953681
+      md5: 5a84a64c39947f0d87e8c1a5f0c0959d
+      size: 15883681
     - path: src/models/model_building.py
       hash: md5
       md5: 825c49dd286d618ddd5db9310be962d4
@@ -74,19 +74,19 @@ stages:
     outs:
     - path: models/model.joblib
       hash: md5
-      md5: 97f0e0c0bdd2cb1dc1dab2a2df8f671e
-      size: 4859
+      md5: 1b695600ede52e15f4280f5b0db49609
+      size: 8859
   model_evaluation:
     cmd: python src/models/model_evaluation.py
     deps:
     - path: data/processed/test_bow.csv
       hash: md5
-      md5: 49e7ddeba1aa3b322e415ab61bec2cf4
-      size: 1978810
+      md5: bf20b149f660f38e546fff11622a7486
+      size: 3951810
     - path: models/model.joblib
       hash: md5
-      md5: 97f0e0c0bdd2cb1dc1dab2a2df8f671e
-      size: 4859
+      md5: 1b695600ede52e15f4280f5b0db49609
+      size: 8859
     - path: src/models/model_evaluation.py
       hash: md5
       md5: 8f6715de11244c82472247997baedcd5
@@ -94,16 +94,16 @@ stages:
     outs:
     - path: reports/experiments_info.json
       hash: md5
-      md5: 80178f6b403a1bd6086bc4b7b6388662
+      md5: a73b85beab5caa9638c556da070626d3
       size: 136
     - path: reports/metrics.json
       hash: md5
-      md5: ec50a64b3bfa81a5c5d420df3249899a
+      md5: 729e3bbf8f083bc57a9c00be29e087cf
       size: 145
   model_registry:
     cmd: python src/models/model_registry.py
     deps:
     - path: reports/experiments_info.json
       hash: md5
-      md5: 80178f6b403a1bd6086bc4b7b6388662
+      md5: a73b85beab5caa9638c556da070626d3
       size: 136

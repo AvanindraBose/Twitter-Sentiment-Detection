@@ -40,6 +40,10 @@ dependencies = [
   "mlflow>=3.0",
   "dvc>=3.0",
   "dagshub",
+
+  # AWS
+  "dvc[s3]",
+  "awscli",
   
   # NLP
   "nltk",

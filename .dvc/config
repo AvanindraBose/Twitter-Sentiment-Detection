@@ -1,4 +1,6 @@
 [core]
-    remote = mytempremote
+    remote = awsdvcstore
 ['remote "mytempremote"']
     url = C:\Users\AVANIN~1\AppData\Local\Temp\sample_files
+['remote "awsdvcstore"']
+    url = s3://twitter-sentiment-dvc-store
