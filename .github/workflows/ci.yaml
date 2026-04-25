@@ -1,9 +1,8 @@
 name: CI-Pipeline
 
 on : 
-  workflow_dispatch:
-    
-  # push
+  # workflow_dispatch:  
+  push
 
 jobs:
   sentilytics-sentiment-testing:
