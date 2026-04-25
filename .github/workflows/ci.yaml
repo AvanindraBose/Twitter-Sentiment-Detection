@@ -19,7 +19,6 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: install dependencies
-        working-directory: ${{ github.workspace }}
         run: |
           uv sync
 
