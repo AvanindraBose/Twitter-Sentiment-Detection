@@ -10,7 +10,9 @@ import logging
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
 from datetime import datetime, timezone
 from src.logger_class import CustomLogger, create_log_path
+from dotenv import load_dotenv
 
+load_dotenv()
 # mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
 # dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
 

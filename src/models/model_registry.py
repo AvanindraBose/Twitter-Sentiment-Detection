@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 from src.logger_class import CustomLogger, create_log_path
 from pathlib import Path
 from mlflow.tracking import MlflowClient
+from dotenv import load_dotenv
 
+
+load_dotenv()
 # mlflow configurations
 # mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
 # dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
