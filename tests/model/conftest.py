@@ -2,7 +2,9 @@ import mlflow
 import os
 import joblib
 import pytest
+import pandas as pd
 from mlflow.tracking import MlflowClient
+from pathlib import Path
 
 
 @pytest.fixture(scope="session")
@@ -52,55 +54,36 @@ def vectorizer(vectorizer_uri: str):
     local_path = mlflow.artifacts.download_artifacts(vectorizer_uri)
     return joblib.load(local_path)
 
-# @pytest.fixture(scope="session")
-# def repo_root() -> Path:
-#     return Path(__file__).resolve().parents[1]
+@pytest.fixture(scope="session")
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
 
 
-# @pytest.fixture(scope="session")
-# def model_path(repo_root: Path) -> Path:
-#     return repo_root / "models" / "model.joblib"
+@pytest.fixture(scope="session")
+def processed_test_data_path(repo_root: Path) -> Path:
+    return repo_root / "data" / "processed" / "test_bow.csv"
 
 
-# @pytest.fixture(scope="session")
-# def vectorizer_path(repo_root: Path) -> Path:
-#     return repo_root / "models" / "vectorizer.joblib"
+@pytest.fixture(scope="session")
+def processed_test_df(processed_test_data_path: Path) -> pd.DataFrame:
+    return pd.read_csv(processed_test_data_path)
 
 
-# @pytest.fixture(scope="session")
-# def processed_test_data_path(repo_root: Path) -> Path:
-#     return repo_root / "data" / "processed" / "test_bow.csv"
+@pytest.fixture(scope="session")
+def processed_test_features(processed_test_df: pd.DataFrame) -> pd.DataFrame:
+    return processed_test_df.iloc[:, :-1]
 
 
-# @pytest.fixture(scope="session")
-# def trained_model(model_path: Path):
-#     return joblib.load(model_path)
+@pytest.fixture(scope="session")
+def processed_test_target(processed_test_df: pd.DataFrame):
+    return processed_test_df.iloc[:, -1]
 
 
-# @pytest.fixture(scope="session")
-# def trained_vectorizer(vectorizer_path: Path):
-#     return joblib.load(vectorizer_path)
+@pytest.fixture(scope="session")
+def holdout_data(processed_test_df: pd.DataFrame) -> pd.DataFrame:
+    return processed_test_df
 
 
-# @pytest.fixture(scope="session")
-# def processed_test_df(processed_test_data_path: Path) -> pd.DataFrame:
-#     return pd.read_csv(processed_test_data_path)
-
-
-# @pytest.fixture(scope="session")
-# def processed_test_features(processed_test_df: pd.DataFrame) -> pd.DataFrame:
-#     return processed_test_df.iloc[:, :-1]
-
-
-# @pytest.fixture(scope="session")
-# def processed_test_target(processed_test_df: pd.DataFrame) -> pd.Series:
-#     return processed_test_df.iloc[:, -1]
-
-
-# @pytest.fixture(scope="session")
-# def sample_texts() -> list[str]:
-#     return [
-#         "i am feeling happy and grateful today",
-#         "this is the worst service i have ever used",
-#         "the launch was smooth and the team did great work",
-#     ]
+@pytest.fixture(scope="session")
+def sample_input_text() -> str:
+    return "hi how are you"
