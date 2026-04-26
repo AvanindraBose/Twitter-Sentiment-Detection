@@ -64,6 +64,7 @@ dev = [
 test = [
     "coverage",  # testing
     "pytest",  # testing
+    "pytest-asyncio", # testing
     "ruff",  # linting
     "ty", # checking types
     "ipdb", # debugging
