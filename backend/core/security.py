@@ -6,6 +6,9 @@ from datetime import datetime, timezone ,timedelta
 from jose import JWTError , jwt , ExpiredSignatureError
 from backend.core.config import settings
 from backend.logging_fastapi.logger_api import auth_logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
