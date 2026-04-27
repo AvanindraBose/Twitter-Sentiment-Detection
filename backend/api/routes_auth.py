@@ -31,6 +31,7 @@ async def signup_page(request:Request):
 async def login_page(request:Request):
     success = None
     info = None
+    error = None
 
     if request.query_params.get("signup") == "success":
         success = "Account created successfully. Please sign in."
@@ -40,11 +41,17 @@ async def login_page(request:Request):
 
     if request.query_params.get("session") == "expired":
         info = "Your session expired. Please log in again."
+
+    if request.query_params.get("refresh") == "rate_limited":
+        error = "Too many refresh attempts. Please log in again shortly."
+
+    if request.query_params.get("refresh") == "service_unavailable":
+        error = "Session service is temporarily unavailable. Please log in again later."
     
     return templates.TemplateResponse(
     request=request,
     name="login.html",
-    context={"success": success, "info": info}
+    context={"success": success, "info": info, "error": error}
     )
 
 @router.post("/signup",response_class=HTMLResponse)
@@ -126,6 +133,21 @@ async def login(request:Request ,
                 password: str = Form(...),
                 db:AsyncSession = Depends(get_db) , 
                 _ = Depends(login_rate_limiter)):
+    if _ == "rate_limited":
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={"error": "Too many login attempts. Please try again later."},
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS
+        )
+
+    if _ == "redis_unavailable":
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={"error": "Service temporarily unavailable. Please try again later."},
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
     
     try:
         user_input = UserLogin(
@@ -264,6 +286,18 @@ async def login(request:Request ,
 async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_db), _= Depends(refresh_rate_limiter)):
     auth_logger.save_logs("Hit Refresh Endpoint" , log_level="info")
     next_url = request.query_params.get("next","/")
+
+    if _ == "rate_limited":
+        return RedirectResponse(
+            url="/auth/login?refresh=rate_limited",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    if _ == "redis_unavailable":
+        return RedirectResponse(
+            url="/auth/login?refresh=service_unavailable",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
     if not next_url.startswith("/"):
         next_url = "/"
