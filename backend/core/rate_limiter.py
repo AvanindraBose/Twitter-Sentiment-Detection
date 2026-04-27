@@ -1,5 +1,6 @@
 import logging
 from fastapi import HTTPException,Request,status,Depends
+from fastapi.templating import Jinja2Templates
 from backend.core.dependencies import get_redis_client , get_refresh_user_id , get_current_user
 import os
 from dotenv import load_dotenv
@@ -18,6 +19,7 @@ REFRESH_RATE_WINDOW = int(os.getenv("REFRESH_RATE_WINDOW", 300))
 PREDICT_RATE_LIMIT = int(os.getenv("PREDICT_RATE_LIMIT", 50))
 PREDICT_RATE_WINDOW = int(os.getenv("PREDICT_RATE_WINDOW", 60))
 
+templates = Jinja2Templates(directory="backend/templates")
 
 async def login_rate_limiter(request:Request , redis : Redis = Depends(get_redis_client)):
     try :
@@ -41,7 +43,7 @@ async def login_rate_limiter(request:Request , redis : Redis = Depends(get_redis
     
         await redis.incr(key)
     except RedisError:
-        auth_logger.save_logs("Redis unavailable — login rate limiter bypassed", log_level="critical")
+        auth_logger.save_logs("Redis unavailable â€” login rate limiter bypassed", log_level="critical")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service Temporarily Unavailable")
@@ -68,7 +70,7 @@ async def refresh_rate_limiter(user_id:str = Depends(get_refresh_user_id) , redi
             )
         await redis.incr(key)
     except RedisError:
-        auth_logger.save_logs("Redis unavailable — refresh rate limiter bypassed", log_level="critical")
+        auth_logger.save_logs("Redis unavailable” refresh rate limiter bypassed", log_level="critical")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service Temporarily Unavailable"
@@ -87,17 +89,18 @@ async def predict_rate_limiter(user_id:str = Depends(get_current_user) , redis :
             return
     
         if int(current_count) >= PREDICT_RATE_LIMIT:
-            prediction_logger.save_logs(f"Rate limit exceeded for user: {user_id}", log_level="warning")
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail = "Too many prediction requests. Please try again Later"
-        )
-    
+            prediction_logger.save_logs(f"Rate limit exceeded for user: {user_id}", log_level="warning") 
+            return "rate_limited" 
+        #     raise HTTPException(
+        #         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        #         detail = "Too many prediction requests. Please try again Later"
+        # )
         await redis.incr(key)
-    except RedisError:
-        prediction_logger.save_logs("Redis unavailable — Prediction rate limiter bypassed", log_level="critical")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Service Temporarily Unavailable"
-        )
 
+    except RedisError:
+        prediction_logger.save_logs("Redis unavailable â€” Prediction rate limiter bypassed", log_level="critical")
+        return "redis_unavailable"
+        # raise HTTPException(
+        #     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        #     detail="Service Temporarily Unavailable"
+        # )

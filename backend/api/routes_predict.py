@@ -1,17 +1,32 @@
-from fastapi import APIRouter, HTTPException, status, Request, Form
+from fastapi import APIRouter, HTTPException, status, Request, Form , Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from backend.logging_fastapi.logger_api import prediction_logger
 from backend.core.dependencies import get_current_user
 from backend.services.model_service import predict_sentiment
+from backend.core.rate_limiter import predict_rate_limiter
 
 router = APIRouter(tags=["Predict"])
 templates = Jinja2Templates(directory="backend/templates")
 
 @router.post("/predict", response_class=HTMLResponse)
-async def prediction(request: Request, text: str = Form(...)):
+async def prediction(request: Request, text: str = Form(...) , _ = Depends(predict_rate_limiter)):
     try:
         user_id = get_current_user(request)
+
+        if _ == "rate_limited" :
+            return templates.TemplateResponse(
+            request=request,
+            name = "dashboard.html",
+            context = {"error": "Experiencing heavy traffic. Kindly try again later." }
+        )
+
+        if _ == "redis_unavailable":
+            return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html",
+        context={"error": "Service temporarily unavailable. Please try again later."}
+        )
 
     except HTTPException as e:
         prediction_logger.save_logs(
@@ -55,7 +70,7 @@ async def prediction(request: Request, text: str = Form(...)):
             name="result.html",
             context={"sentiment": result["prediction"]}
         )
-
+    
     except Exception as e:
         prediction_logger.save_logs(
             f"Error occurred while making prediction. Error: {str(e)}",
