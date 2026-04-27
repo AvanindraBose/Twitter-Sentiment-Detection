@@ -20,13 +20,13 @@ load_dotenv()
 # except Exception as e:
 #     prediction_logger.save_logs(f"Error occurred while initializing MLflow: {str(e)}", log_level="error")
 
-def get_api_key(api_key:str = Header(...)):
-    if api_key != settings.API_KEY:
-        health_logger.save_logs("Invalid API Key" , log_level='Warning')
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid API Key"
-        )
+# def get_api_key(api_key:str = Header(...)):
+#     if api_key != settings.API_KEY:
+#         health_logger.save_logs("Invalid API Key" , log_level='Warning')
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Invalid API Key"
+#         )
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
