@@ -1738,6 +1738,7 @@ dev = [
 ]
 test = [
     { name = "coverage" },
+    { name = "httpx" },
     { name = "ipdb" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -1755,6 +1756,7 @@ requires-dist = [
     { name = "dvc", specifier = ">=3.0" },
     { name = "dvc", extras = ["s3"] },
     { name = "fastapi" },
+    { name = "httpx", marker = "extra == 'test'" },
     { name = "hyperopt" },
     { name = "ipdb", marker = "extra == 'test'" },
     { name = "joblib" },

@@ -63,6 +63,7 @@ dev = [
 
 test = [
     "coverage",  # testing
+    "httpx", # async test client
     "pytest",  # testing
     "pytest-asyncio", # testing
     "ruff",  # linting
@@ -95,6 +96,9 @@ select = [
     "B",   # flake8-bugbear
     "UP",  # pyupgrade
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
 
 [tool.uv]
 package = true
