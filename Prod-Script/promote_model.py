@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from src.logger_class import CustomLogger,create_log_path 
 from datetime import datetime,timezone
 
-
+load_dotenv()
 # File Handler configurations
 log_file_path = create_log_path("Model-Promotion")
 model_promotion_logger = CustomLogger(
@@ -19,11 +19,20 @@ model_promotion_logger.set_log_level(level=logging.INFO)
 model_promotion_logger.save_logs(f"Model Promotion Script Triggered at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
 
 def get_token() -> str:
+
     try:
+
         token = os.getenv("DAGSHUB_PAT")
+
     except Exception as e:
+
         model_promotion_logger.save_logs("DAGSHUB token not found in env file",log_level='warning')
         raise
+
+    else:
+        
+        model_promotion_logger.save_logs('DAGSHUB token found and returned',log_level='info')
+        return token
     
 def get_client() -> MlflowClient:
     dagshub_token = get_token()
