@@ -44,13 +44,13 @@ jobs:
       - name: run model tests
         env: 
           DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
-          ACCESS_TOKEN_eXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_eXPIRE_MINUTES }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
           REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
           API_KEY: ${{ secrets.API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_ACCESS_SECRET_KEY: ${{ secrets.JWT_ACCESS_SECRET_KEY }}
           JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
-          MLFLOW_TRACKING_URI: $ {{ secrets.MLFLOW_TRACKING_URI }}
-          REDIS_URL: $ {{ secrets.REDIS_URL }}
-        run : |
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+        run: |
           uv run pytest
