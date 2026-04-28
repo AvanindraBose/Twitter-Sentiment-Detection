@@ -1,16 +1,26 @@
 import mlflow
 import joblib
-import dagshub
+import os
+from dotenv import load_dotenv
 from mlflow.tracking import MlflowClient
 from backend.logging_fastapi.logger_api import prediction_logger
 from backend.core.config import settings
 from fastapi.concurrency import run_in_threadpool
 
+load_dotenv()
 # Facing Performance Issues hence using Async loader functions
 
 try:
-    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
-    dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
+    dagshub_token = os.getenv("DAGSHUB_PAT")
+
+    if not dagshub_token:
+        prediction_logger.save_logs("Dagshub Token not found in env file",log_level='warning')
+        os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+        os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+    mlflow.set_tracking_uri(
+        "https://dagshub.com/AvanindraBose/Twitter-Sentiment-Detection.mlflow"
+    )
     client = MlflowClient()
 except Exception as e:
     prediction_logger.save_logs(f"Error occurred while initializing MLflow: {str(e)}", log_level="error")

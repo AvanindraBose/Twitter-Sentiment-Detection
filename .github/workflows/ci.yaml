@@ -7,6 +7,29 @@ on :
 jobs:
   sentilytics-sentiment-testing:
     runs-on: "ubuntu-latest"
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sentilytics_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sentilytics_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: checkout code
@@ -38,12 +61,16 @@ jobs:
       - name: run dvc pipeline
         env: 
           DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
         run: |
           uv run dvc repro 
       
-      - name: run model tests
+      - name: run unit and model tests
         env: 
           DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
           REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
           API_KEY: ${{ secrets.API_KEY }}
@@ -53,4 +80,22 @@ jobs:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
         run: |
-          uv run pytest
+          uv run pytest tests/model tests/api/unit -q
+
+      - name: run integration tests
+        env:
+          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+          REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
+          API_KEY: ${{ secrets.API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_ACCESS_SECRET_KEY: ${{ secrets.JWT_ACCESS_SECRET_KEY }}
+          JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/sentilytics_test
+          TEST_REDIS_URL: redis://127.0.0.1:6379/0
+        run: |
+          uv run pytest tests/api/integration -q
