@@ -6,7 +6,13 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from redis.asyncio import Redis
 from sqlalchemy import delete, text
-
+# Point the app at dedicated test services before backend modules import settings.
+from backend.core.config import settings
+from backend.core.database import AsyncSessionLocal, Base, engine
+from backend.db.models.refresh_token import RefreshToken
+from backend.db.models.users import User
+from backend.loader.redis_loader import close_redis_client
+from backend.main import app
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 TEST_REDIS_URL = os.getenv("TEST_REDIS_URL")
@@ -17,17 +23,8 @@ if not TEST_DATABASE_URL or not TEST_REDIS_URL:
         allow_module_level=True,
     )
 
-# Point the app at dedicated test services before backend modules import settings.
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["REDIS_URL"] = TEST_REDIS_URL
-
-from backend.core.config import settings
-from backend.core.database import AsyncSessionLocal, Base, engine
-from backend.db.models.refresh_token import RefreshToken
-from backend.db.models.users import User
-from backend.loader.redis_loader import close_redis_client
-from backend.main import app
-
 
 @pytest.fixture(scope="session")
 def integration_requirements():
