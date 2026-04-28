@@ -90,11 +90,11 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
           REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
           API_KEY: ${{ secrets.API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/sentilytics_test
           JWT_ACCESS_SECRET_KEY: ${{ secrets.JWT_ACCESS_SECRET_KEY }}
           JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          REDIS_URL: ${{ secrets.REDIS_URL }}
+          REDIS_URL: redis://127.0.0.1:6379/0
           TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/sentilytics_test
           TEST_REDIS_URL: redis://127.0.0.1:6379/0
         run: |
