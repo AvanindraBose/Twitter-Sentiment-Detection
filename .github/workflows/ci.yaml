@@ -95,7 +95,7 @@ jobs:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
         run: |
-          uv run pytest test/api/unit -q
+          uv run pytest tests/api/unit -q
 
       - name: run integration tests
         env:
