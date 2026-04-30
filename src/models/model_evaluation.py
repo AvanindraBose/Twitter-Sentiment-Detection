@@ -104,9 +104,13 @@ def evaluate_model(clf, X_test: np.ndarray, y_test: np.ndarray) -> dict:
             'recall': recall,
             'auc': auc
         }
+
         logger.debug('Model evaluation metrics calculated')
+
         evaluation_logger.save_logs(f"Model evaluation metrics calculated: {metrics_dict}", log_level='info')
+
         return metrics_dict
+    
     except Exception as e:
         logger.error('Error during model evaluation: %s', e)
         evaluation_logger.save_logs(f"Error during model evaluation: {e}", log_level='error')
