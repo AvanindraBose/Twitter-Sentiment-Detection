@@ -84,5 +84,5 @@ async def prediction(request: Request, text: str = Form(...) , _ = Depends(predi
             request=request,
             name = "dashboard.html",
             context = {"error": "Experiencing heavy traffic. Kindly try again later." },
-            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE 
         )
