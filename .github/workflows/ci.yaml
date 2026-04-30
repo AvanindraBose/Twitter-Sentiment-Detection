@@ -154,8 +154,7 @@ jobs:
         run: uv sync --extra test
 
       - name: download nltk data
-        run: |
-          uv run python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4')"
+        run: uv run python scripts/setup_nltk.py
 
       - name: run unit tests
         env:
@@ -290,8 +289,7 @@ jobs:
         run: uv sync --extra test
 
       - name: download nltk data
-        run: |
-          uv run python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4')"
+        run: uv run python scripts/setup_nltk.py
 
       - name: run post-promotion unit tests
         env:
