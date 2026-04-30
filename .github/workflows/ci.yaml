@@ -1,12 +1,109 @@
 name: CI-Pipeline
 
-on : 
-  # workflow_dispatch:  
-  push
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
 
 jobs:
-  sentilytics-sentiment-testing:
-    runs-on: "ubuntu-latest"
+
+  ci-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint GitHub Actions workflow
+        uses: raven-actions/actionlint@v2
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      ml: ${{ steps.filter.outputs.ml }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'tests/api/**'
+              - 'tests/conftest.py'
+              - 'pyproject.toml'
+              - 'uv.lock'
+            ml:
+              - 'src/**'
+              - 'data/**'
+              - 'dvc.yaml'
+              - 'dvc.lock'
+              - 'params.yaml'
+              - 'Prod-Script/**'
+              - 'tests/model/**'
+              - 'backend/loader/artifacts_loader.py'
+              - 'backend/services/model_service.py'
+              - 'pyproject.toml'
+              - 'uv.lock'
+
+  ml-pipeline:
+    needs: changes
+    if: needs.changes.outputs.ml == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.4"
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: 0.11.6
+
+      - name: cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: install dependencies
+        run: uv sync --extra test
+
+      - name: run dvc pipeline
+        env:
+          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
+        run: uv run dvc repro
+
+      - name: run model tests
+        env:
+          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
+        run: uv run pytest tests/model -q
+
+  api-tests:
+    needs:
+      - changes
+      # - ml-pipeline
+    if: |
+      always() && (
+        needs.changes.outputs.backend == 'true'
+        )
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16
@@ -33,54 +130,29 @@ jobs:
 
     steps:
       - name: checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: setup python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.4"
 
-      - name: Install uv
+      - name: install uv
         uses: astral-sh/setup-uv@v5
         with:
           version: 0.11.6
 
-      - name: Cache uv dependencies
-        uses: actions/cache@v3
+      - name: cache uv dependencies
+        uses: actions/cache@v4
         with:
           path: ~/.cache/uv
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
           restore-keys: |
             ${{ runner.os }}-uv-
-      
+
       - name: install dependencies
-        working-directory: ${{ github.workspace }}
-        run: |
-          uv sync --extra test
+        run: uv sync --extra test
 
-      - name: run dvc pipeline
-        env: 
-          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
-          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
-        run: |
-          uv run dvc repro 
-      
-      - name: run model tests
-        env: 
-          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
-          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
-        run: |
-          uv run pytest tests/model
-
-      - name: promote model
-        if: success()
-        env:
-          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
-        run: |
-          uv run python Prod-Script/promote_model.py
-      
       - name: run unit tests
         env:
           DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
@@ -89,13 +161,12 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
           REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
           API_KEY: ${{ secrets.API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/sentilytics_test
           JWT_ACCESS_SECRET_KEY: ${{ secrets.JWT_ACCESS_SECRET_KEY }}
           JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          REDIS_URL: ${{ secrets.REDIS_URL }}
-        run: |
-          uv run pytest tests/api/unit -q
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: uv run pytest tests/api/unit -q
 
       - name: run integration tests
         env:
@@ -110,5 +181,129 @@ jobs:
           JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           REDIS_URL: redis://127.0.0.1:6379/0
-        run: |
-          uv run pytest tests/api/integration -q
+        run: uv run pytest tests/api/integration -q
+
+  promote-model:
+    needs:
+      - changes
+      - ml-pipeline
+      # - api-tests
+    if: (github.ref == 'refs/heads/main') && (needs.changes.outputs.ml == 'true') && (needs.ml-pipeline.result == 'success')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.4"
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: 0.11.6
+
+      - name: cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: install dependencies
+        run: uv sync --extra test
+
+      - name: promote model
+        env:
+          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
+        run: uv run python Prod-Script/promote_model.py
+
+  post-promotion-api-checks:
+    needs:
+      - changes
+      - promote-model
+    if: (github.ref == 'refs/heads/main') && (needs.changes.outputs.ml == 'true' && needs.promote-model.result == 'success')
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sentilytics_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sentilytics_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.4"
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: 0.11.6
+
+      - name: cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: install dependencies
+        run: uv sync --extra test
+
+      - name: run post-promotion unit tests
+        env:
+          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+          REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
+          API_KEY: ${{ secrets.API_KEY }}
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/sentilytics_test
+          JWT_ACCESS_SECRET_KEY: ${{ secrets.JWT_ACCESS_SECRET_KEY }}
+          JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: uv run pytest tests/api/unit -q
+
+      - name: run post-promotion integration tests
+        env:
+          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_PAT }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_PAT }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+          REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
+          API_KEY: ${{ secrets.API_KEY }}
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/sentilytics_test
+          JWT_ACCESS_SECRET_KEY: ${{ secrets.JWT_ACCESS_SECRET_KEY }}
+          JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: uv run pytest tests/api/integration -q

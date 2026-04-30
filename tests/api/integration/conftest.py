@@ -1,10 +1,26 @@
 import os
 from collections.abc import AsyncIterator
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from redis.asyncio import Redis
 from sqlalchemy import delete, text
+
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+REDIS_URL = os.getenv("REDIS_URL")
+
+if not DATABASE_URL or not REDIS_URL:
+    pytest.skip(
+        "Integration tests are skipped until DATABASE_URL and REDIS_URL are set.",
+        allow_module_level=True,
+    )
+
+# Ensure app settings see the integration test services before backend imports.
+os.environ["DATABASE_URL"] = DATABASE_URL
+os.environ["REDIS_URL"] = REDIS_URL
+
 from backend.core.config import settings
 from backend.core.database import AsyncSessionLocal, Base, engine
 from backend.db.models.refresh_token import RefreshToken
@@ -12,23 +28,12 @@ from backend.db.models.users import User
 from backend.loader.redis_loader import close_redis_client
 from backend.main import app
 
-TEST_DATABASE_URL = os.getenv("DATABASE_URL")
-TEST_REDIS_URL = os.getenv("REDIS_URL")
-
-if not TEST_DATABASE_URL or not TEST_REDIS_URL:
-    pytest.skip(
-        "Integration tests are skipped until TEST_DATABASE_URL and TEST_REDIS_URL are set.",
-        allow_module_level=True,
-    )
-
-os.environ["DATABASE_URL"] = TEST_DATABASE_URL
-os.environ["REDIS_URL"] = TEST_REDIS_URL
 
 @pytest.fixture(scope="session")
 def integration_requirements():
     return {
-        "database_url": TEST_DATABASE_URL,
-        "redis_url": TEST_REDIS_URL,
+        "database_url": DATABASE_URL,
+        "redis_url": REDIS_URL,
     }
 
 
