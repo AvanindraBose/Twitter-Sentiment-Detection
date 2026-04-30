@@ -83,5 +83,6 @@ async def prediction(request: Request, text: str = Form(...) , _ = Depends(predi
         return templates.TemplateResponse(
             request=request,
             name = "dashboard.html",
-            context = {"error": "Experiencing heavy traffic. Kindly try again later." }
+            context = {"error": "Experiencing heavy traffic. Kindly try again later." },
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         )
