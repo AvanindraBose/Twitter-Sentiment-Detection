@@ -153,6 +153,10 @@ jobs:
       - name: install dependencies
         run: uv sync --extra test
 
+      - name: download nltk data
+        run: |
+          uv run python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4')"
+
       - name: run unit tests
         env:
           DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
@@ -182,6 +186,13 @@ jobs:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           REDIS_URL: redis://127.0.0.1:6379/0
         run: uv run pytest tests/api/integration -q
+
+      - name: upload api test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-logs
+          path: logs/
 
   promote-model:
     needs:
@@ -278,6 +289,10 @@ jobs:
       - name: install dependencies
         run: uv sync --extra test
 
+      - name: download nltk data
+        run: |
+          uv run python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4')"
+
       - name: run post-promotion unit tests
         env:
           DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
@@ -307,3 +322,10 @@ jobs:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           REDIS_URL: redis://127.0.0.1:6379/0
         run: uv run pytest tests/api/integration -q
+
+      - name: upload post-promotion api logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-promotion-api-logs
+          path: logs/
