@@ -174,8 +174,11 @@ def main():
                 params = clf.get_params()
                 for param_name, param_value in params.items():
                     mlflow.log_param(param_name, param_value)
+
             model_info = mlflow.sklearn.log_model(clf, "model")
+
             save_run_info(run.info.run_id,model_info.model_id,'reports/experiments_info.json')
+            
             mlflow.log_artifact('reports/metrics.json')
             mlflow.log_artifact('reports/experiments_info.json')
             mlflow.log_artifact('./models/vectorizer.joblib')
