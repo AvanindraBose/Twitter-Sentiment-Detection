@@ -6,11 +6,11 @@ WORKDIR /app/
 # COPY pyproject.toml and uv.lock files
 COPY pyproject.toml uv.lock ./
 # Copy scripts to download nltk library
-COPY ./scripts scripts/
+COPY ./scripts/ scripts/
 # Copy the contents of our workdir
 COPY ./backend/ backend/
 # Copying Src Directory
-COPY ./src src/
+COPY ./src/logger_class.py src/logger_class.py
 
 # Install pip
 RUN pip install uv
@@ -20,8 +20,8 @@ RUN uv sync --frozen
 RUN uv run python scripts/setup_nltk.py
 
 # Port
-EXPOSE 5000
+EXPOSE 8000
 
 # Command -> Executed when a container is build on top of it
-CMD ["uv","run","uvicorn","backend.main:app","--host","0.0.0.0","--port","5000"]
+CMD ["uv","run","uvicorn","backend.main:app","--host","0.0.0.0","--port","8000"]
 
