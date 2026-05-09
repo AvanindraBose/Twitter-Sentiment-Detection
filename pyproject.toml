@@ -1,7 +1,7 @@
 [project]
 name = "Emotion-Detection"
 version = "0.0.1"
-description = "This project is for Predicting the churn for Subscribly App."
+description = "Twitter sentiment detection system with FastAPI inference service."
 readme = "README.md"
 authors = [
   {name = "Avanindra Bose", email = "avanindrabose0218@gmail.com"}
@@ -9,93 +9,92 @@ authors = [
 maintainers = [
   {name = "Avanindra Bose", email = "avanindrabose0218@gmail.com"}
 ]
-classifiers = [
-    # TODO
-]
 license = {text = "MIT"}
-dependencies = [
-  "typer",
-  # Data
-  "pandas>=2.0",
-  "numpy>=1.24",
 
-  # Backend
+requires-python = ">=3.10"
+
+# ✅ ONLY API + INFERENCE DEPENDENCIES
+dependencies = [
+  # CLI (optional but lightweight)
+  "typer",
+
+  # Backend (API)
   "fastapi",
   "uvicorn",
   "pydantic",
+  "pydantic[email]",
   "python-multipart",
+
+  # Auth & security
   "python-jose[cryptography]",
   "bcrypt",
+
+  # Database
   "sqlalchemy",
   "asyncpg",
-  "redis",
-  "pydantic[email]",
 
-  # ML
+  # Cache
+  "redis",
+
+  # MLflow (for remote model loading via DagsHub)
+  "mlflow>=3.0",
+
+  # Inference requirements (REQUIRED for .joblib models)
   "scikit-learn>=1.3",
+  "pandas>=2.0",
+  "numpy>=1.24",
+  "nltk",
+  "joblib",
+
+  # Utilities
+  "pyyaml",
+]
+
+# ✅ OPTIONAL GROUPS FOR TRAINING / PIPELINES
+[project.optional-dependencies]
+
+ml = [
+  "pandas>=2.0",
   "xgboost",
   "hyperopt",
-
-  # ML pipelines
-  "mlflow>=3.0",
-  "dvc>=3.0",
-  "dagshub",
-
-  # AWS
-  "dvc[s3]",
-  "awscli",
-   
-  # NLP
   "nltk",
   "spacy",
-
-  # Config & utils
-  "pyyaml",
-  "joblib",
 ]
-requires-python = ">= 3.10"
 
-[project.optional-dependencies]
+pipeline = [
+  "dvc>=3.0",
+  "dagshub",
+  "dvc[s3]",
+  "awscli",
+]
+
 dev = [
-    "matplotlib",
-    "seaborn",
+  "matplotlib",
+  "seaborn",
 ]
 
 test = [
-    "coverage",  # testing
-    "httpx", # async test client
-    "pytest",  # testing
-    "pytest-asyncio", # testing
-    "ruff",  # linting
-    "ty", # checking types
-    "ipdb", # debugging
+  "coverage",
+  "httpx",
+  "pytest",
+  "pytest-asyncio",
+  "ruff",
+  "ty",
+  "ipdb",
 ]
 
 [project.urls]
 bugs = "https://github.com/AvanindraBose/Subscribly/issues"
-changelog = "https://github.com/AvanindraBose/Subscribly/blob/master/changelog.md"
 homepage = "https://github.com/AvanindraBose/Subscribly"
 
 [project.scripts]
 Subscribly = "Subscribly.cli:app"
 
-[tool.ty]
-# All rules are enabled as "error" by default; no need to specify unless overriding.
-# Example override: relax a rule for the entire project (uncomment if needed).
-# rules.TY015 = "warn"  # For invalid-argument-type, warn instead of error.
-
 [tool.ruff]
 line-length = 120
 
 [tool.ruff.lint]
-select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # Pyflakes
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "UP",  # pyupgrade
-]
+select = ["E", "W", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
