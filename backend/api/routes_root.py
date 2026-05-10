@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from backend.core.dependencies import get_current_user
 from backend.logging_fastapi.logger_api import auth_logger
 
+
 router = APIRouter(tags=["Root"])
 templates = Jinja2Templates(directory="backend/templates")
 
