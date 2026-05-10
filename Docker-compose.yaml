@@ -2,9 +2,7 @@ name: Twitter-Sentiment-Analysis
 # Testing
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: avid0218/twitter-sentiment-analysis-api:latest
     container_name: fast-api
     ports:
       - "8000:8000"
