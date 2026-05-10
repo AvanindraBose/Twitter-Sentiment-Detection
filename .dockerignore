@@ -11,3 +11,6 @@ data
 models
 build
 *.egg-info
+dvc.lock
+dvc.yaml
+.gitignore
