@@ -65,8 +65,18 @@ def processed_test_data_path(repo_root: Path) -> Path:
 
 
 @pytest.fixture(scope="session")
+def interim_test_data_path(repo_root: Path) -> Path:
+    return repo_root / "data" / "interim" / "test_processed.csv"
+
+
+@pytest.fixture(scope="session")
 def processed_test_df(processed_test_data_path: Path) -> pd.DataFrame:
     return pd.read_csv(processed_test_data_path)
+
+
+@pytest.fixture(scope="session")
+def interim_test_df(interim_test_data_path: Path) -> pd.DataFrame:
+    return pd.read_csv(interim_test_data_path)
 
 
 @pytest.fixture(scope="session")
@@ -82,6 +92,17 @@ def processed_test_target(processed_test_df: pd.DataFrame):
 @pytest.fixture(scope="session")
 def holdout_data(processed_test_df: pd.DataFrame) -> pd.DataFrame:
     return processed_test_df
+
+
+@pytest.fixture(scope="session")
+def production_holdout_data(vectorizer, interim_test_df: pd.DataFrame) -> pd.DataFrame:
+    features = vectorizer.transform(interim_test_df["content"].fillna(""))
+    feature_df = pd.DataFrame(
+        features.toarray(),
+        columns=[str(index) for index in range(features.shape[1])],
+    )
+    feature_df["label"] = interim_test_df["sentiment"].values
+    return feature_df
 
 
 @pytest.fixture(scope="session")
