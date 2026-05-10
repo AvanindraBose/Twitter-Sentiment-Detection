@@ -69,6 +69,7 @@ def load_model(file_path: str):
         evaluation_logger.save_logs(f"Unexpected error occurred while loading the model: {e}", log_level='error')
         raise
 
+
 def load_data(file_path: str) -> pd.DataFrame:
     """Load data from a CSV file."""
     try:
