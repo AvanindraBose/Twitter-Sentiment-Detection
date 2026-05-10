@@ -12,8 +12,7 @@ from src.logger_class import CustomLogger, create_log_path
 from dotenv import load_dotenv
 
 load_dotenv()
-# mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
-# dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
+
 
 dagshub_token = os.getenv("DAGSHUB_PAT")
 if not dagshub_token:
