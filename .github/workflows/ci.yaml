@@ -168,11 +168,8 @@ jobs:
     needs:
       - changes
     if: |
-      always() &&
-      (
-        github.event_name == 'pull_request' ||
-        needs.changes.outputs.backend == 'true'
-      )
+      needs.changes.outputs.backend == 'true'
+      
     runs-on: ubuntu-latest
     services:
       postgres:
