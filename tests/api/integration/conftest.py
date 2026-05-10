@@ -1,8 +1,7 @@
 import os
-from collections.abc import AsyncIterator
-
 import pytest
 import pytest_asyncio
+from collections.abc import AsyncIterator
 from httpx import ASGITransport, AsyncClient
 from redis.asyncio import Redis
 from sqlalchemy import delete, text

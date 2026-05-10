@@ -5,7 +5,7 @@ import nltk
 
 
 def main() -> None:
-    download_dir = Path(os.environ.get("NLTK_DATA", "/usr/local/share/nltk_data"))
+    download_dir = Path(os.environ.get("NLTK_DATA", Path.home() / "nltk_data"))
     download_dir.mkdir(parents=True, exist_ok=True)
 
     for resource in ("stopwords", "wordnet", "omw-1.4"):

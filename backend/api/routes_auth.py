@@ -18,6 +18,7 @@ from pydantic import ValidationError
 router = APIRouter(prefix="/auth",tags=["Auth"])
 templates = Jinja2Templates(directory="backend/templates")
 
+
 ACCESS_COOKIE_NAME = "access_token"
 REFRESH_COOKIE_NAME = "refresh_token"
 
