@@ -1,10 +1,10 @@
 name: CI-Pipeline
 
 on:
-  # push:
-  #   branches:
-  #     - "main"
-  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+  # workflow_dispatch:
     
 
 
@@ -51,6 +51,9 @@ jobs:
               - 'backend/services/model_service.py'
               - 'pyproject.toml'
               - 'uv.lock'
+            container:
+              - 'Dockerfile'
+              - 'Docker-compose.yaml'
 
   ml-pipeline:
     needs: changes
@@ -331,10 +334,19 @@ jobs:
   
   dockerizing-api:
     needs:
+      - changes
       - post-promotion-api-checks
-    if: (github.ref == 'refs/heads/main') && (needs.post-promotion-api-checks.result == 'success')
+    if: always() && 
+        (github.ref == 'refs/heads/main') && 
+        (
+          needs.post-promotion-api-checks.result == 'success' || 
+          needs.changes.outputs.container == 'true'
+        )
     runs-on: ubuntu-latest
     steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
       - name: login to docker
         if: success()
         uses: docker/login-action@v2
@@ -343,13 +355,15 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       
       - name: Build Docker Image
-        if: success
+        if: success()
         run: |
-          docker-compose up --build
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:${{ github.sha }} \
+                       -t ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest .
       
       - name: Push Docker Image to DockerHub
         if: success()
         run: |
-          docker tag twitter-sentiment-analysis-api ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:${{ github.sha }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest
+          
 
