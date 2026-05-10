@@ -1,5 +1,5 @@
 FROM python:3.11-slim AS builder
-# Testing the Chages with CI Pipeline
+
 ENV UV_LINK_MODE=copy \
     NLTK_DATA=/usr/local/share/nltk_data
 

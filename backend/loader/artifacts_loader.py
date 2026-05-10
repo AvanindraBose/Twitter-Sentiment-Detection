@@ -8,6 +8,7 @@ from backend.core.config import settings
 from fastapi.concurrency import run_in_threadpool
 
 load_dotenv()
+
 # Facing Performance Issues hence using Async loader functions
 
 try:
