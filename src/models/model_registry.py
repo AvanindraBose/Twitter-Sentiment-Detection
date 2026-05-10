@@ -8,7 +8,6 @@ from pathlib import Path
 from mlflow.tracking import MlflowClient
 from dotenv import load_dotenv
 
-
 load_dotenv()
 # mlflow configurations
 # mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))

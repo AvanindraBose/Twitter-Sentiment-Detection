@@ -84,7 +84,7 @@ jobs:
             ${{ runner.os }}-uv-
 
       - name: install dependencies
-        run: uv sync --extra test
+        run: uv sync --extra test --extra ml --extra pipeline
 
       - name: run dvc pipeline
         env:
@@ -103,7 +103,6 @@ jobs:
   api-tests:
     needs:
       - changes
-      # - ml-pipeline
     if: |
       always() && (
         needs.changes.outputs.backend == 'true'
@@ -111,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:15
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -202,7 +201,6 @@ jobs:
     needs:
       - changes
       - ml-pipeline
-      # - api-tests
     if: (github.ref == 'refs/heads/main') && (needs.changes.outputs.ml == 'true') && (needs.ml-pipeline.result == 'success')
     runs-on: ubuntu-latest
 
