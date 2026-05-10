@@ -14,6 +14,7 @@ from backend.logging_fastapi.logger_api import auth_logger
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 
+
 router = APIRouter(prefix="/auth",tags=["Auth"])
 templates = Jinja2Templates(directory="backend/templates")
 
