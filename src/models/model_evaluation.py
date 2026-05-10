@@ -3,7 +3,6 @@ import pandas as pd
 import joblib
 import mlflow
 import mlflow.sklearn
-import dagshub
 import json
 import os
 import logging
