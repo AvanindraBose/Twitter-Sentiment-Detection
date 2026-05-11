@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - main
-  # workflow_dispatch:
+  workflow_dispatch:
   
     
 jobs:
@@ -470,13 +470,15 @@ jobs:
       - name: build docker image
         if: success()
         run: |
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker build \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+            -t "${IMAGE_URI}:${{ github.sha }}" \
+            -t "${IMAGE_URI}:latest" .
       
       - name: push docker image to AWS ECR
         run: |
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
+          docker push "${IMAGE_URI}:${GITHUB_SHA}"
+          docker push "${IMAGE_URI}:latest"
 
 
