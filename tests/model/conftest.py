@@ -76,7 +76,23 @@ def processed_test_df(processed_test_data_path: Path) -> pd.DataFrame:
 
 @pytest.fixture(scope="session")
 def interim_test_df(interim_test_data_path: Path) -> pd.DataFrame:
+    if not interim_test_data_path.exists():
+        pytest.skip(
+            "Processed holdout data not available. Run the DVC pipeline before performance tests."
+        )
+
     return pd.read_csv(interim_test_data_path)
+
+
+@pytest.fixture(scope="session")
+def sample_text_batch() -> list[str]:
+    return [
+        "i am happy with this product",
+        "this is frustrating and disappointing",
+        "the result is okay and works as expected",
+        "i love this experience",
+        "this made me sad",
+    ]
 
 
 @pytest.fixture(scope="session")
@@ -103,6 +119,15 @@ def production_holdout_data(vectorizer, interim_test_df: pd.DataFrame) -> pd.Dat
     )
     feature_df["label"] = interim_test_df["sentiment"].values
     return feature_df
+
+
+@pytest.fixture(scope="session")
+def production_sample_features(vectorizer, sample_text_batch: list[str]) -> pd.DataFrame:
+    features = vectorizer.transform(sample_text_batch)
+    return pd.DataFrame(
+        features.toarray(),
+        columns=[str(index) for index in range(features.shape[1])],
+    )
 
 
 @pytest.fixture(scope="session")

@@ -135,7 +135,7 @@ jobs:
             ${{ runner.os }}-uv-
 
       - name: install dependencies
-        run: uv sync --extra test --extra ml
+        run: uv sync --extra test --extra ml --extra pipeline
 
       - name: download nltk data
         run: uv run python scripts/setup_nltk.py
@@ -168,11 +168,8 @@ jobs:
     needs:
       - changes
     if: |
-      always() &&
-      (
-        github.event_name == 'pull_request' ||
-        needs.changes.outputs.backend == 'true'
-      )
+      needs.changes.outputs.backend == 'true'
+      
     runs-on: ubuntu-latest
     services:
       postgres:

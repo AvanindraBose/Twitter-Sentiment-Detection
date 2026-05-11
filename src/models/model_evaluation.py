@@ -3,7 +3,6 @@ import pandas as pd
 import joblib
 import mlflow
 import mlflow.sklearn
-import dagshub
 import json
 import os
 import logging
@@ -13,8 +12,7 @@ from src.logger_class import CustomLogger, create_log_path
 from dotenv import load_dotenv
 
 load_dotenv()
-# mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
-# dagshub.init(repo_owner='AvanindraBose', repo_name='Twitter-Sentiment-Detection', mlflow=True)
+
 
 dagshub_token = os.getenv("DAGSHUB_PAT")
 if not dagshub_token:
@@ -70,6 +68,7 @@ def load_model(file_path: str):
         logger.error('Unexpected error occurred while loading the model: %s', e)
         evaluation_logger.save_logs(f"Unexpected error occurred while loading the model: {e}", log_level='error')
         raise
+
 
 def load_data(file_path: str) -> pd.DataFrame:
     """Load data from a CSV file."""

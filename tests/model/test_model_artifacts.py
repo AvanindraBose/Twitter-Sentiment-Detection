@@ -51,8 +51,7 @@ def test_model_performance(trained_model, production_holdout_data):
     assert f1_new >= expected_f1, f"F1 score should be at least {expected_f1}"
 
 
-def test_model_prediction_count_matches_input_rows(trained_model, production_holdout_data):
-    sample_batch = production_holdout_data.iloc[:, :-1].head(10)
-    predictions = trained_model.predict(sample_batch)
+def test_model_prediction_count_matches_input_rows(trained_model, production_sample_features, sample_text_batch):
+    predictions = trained_model.predict(production_sample_features)
 
-    assert len(predictions) == len(sample_batch)
+    assert len(predictions) == len(sample_text_batch)
