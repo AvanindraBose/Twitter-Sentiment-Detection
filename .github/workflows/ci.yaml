@@ -40,6 +40,8 @@ jobs:
               - 'backend/**'
               - 'tests/api/**'
               - 'tests/conftest.py'
+              - 'pyproject.toml'
+              - 'uv.lock'
             ml:
               - 'src/**'
               - 'data/**'
@@ -50,6 +52,8 @@ jobs:
               - 'tests/model/**'
               - 'backend/loader/artifacts_loader.py'
               - 'backend/services/model_service.py'
+              - 'pyproject.toml'
+              - 'uv.lock'
             container:
               - 'Dockerfile'
               - 'Docker-compose.yaml'
@@ -149,7 +153,10 @@ jobs:
     if: |
       always() &&
       needs.changes.outputs.container == 'true' &&
-      github.event_name == 'pull_request'
+      ( 
+        github.event_name == 'pull_request' || 
+        github.event_name == 'push'
+      )
     runs-on: ubuntu-latest
 
     steps:
