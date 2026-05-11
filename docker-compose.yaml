@@ -2,9 +2,6 @@ name: Twitter-Sentiment-Analysis
 # Testing
 services:
   api:
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
     image: 660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:latest
     container_name: fast-api
     ports:
