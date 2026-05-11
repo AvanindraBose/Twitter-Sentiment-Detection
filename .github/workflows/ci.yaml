@@ -155,8 +155,7 @@ jobs:
       needs.changes.outputs.container == 'true' &&
       ( 
         github.event_name == 'pull_request' || 
-        github.event_name == 'push' || 
-        github.refs = 'refs/heads/main'
+        github.event_name == 'push'
       )
     runs-on: ubuntu-latest
 
