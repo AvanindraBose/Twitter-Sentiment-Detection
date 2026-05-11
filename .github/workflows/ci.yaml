@@ -155,7 +155,8 @@ jobs:
       needs.changes.outputs.container == 'true' &&
       ( 
         github.event_name == 'pull_request' || 
-        github.event_name == 'push'
+        github.event_name == 'push' || 
+        github.refs = 'refs/heads/main'
       )
     runs-on: ubuntu-latest
 
@@ -447,45 +448,36 @@ jobs:
         )
 
     runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: eu-north-1
+      ECR_REGISTRY: 660838764267.dkr.ecr.eu-north-1.amazonaws.com
+      ECR_REPOSITORY: ml/sentiment-analysis-app
+
     steps:
       - name: checkout code
         uses: actions/checkout@v4
       
-      - name: install uv
-        uses: astral-sh/setup-uv@v5
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          version: 0.11.6
-
-      - name: cache uv dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
-
-      - name: install dependencies
-        run: uv sync --extra deployment
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
       
-      - name: login to AWS ECR
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_key_id ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 660838764267.dkr.ecr.eu-north-1.amazonaws.com
-      
+      - name: login to aws ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: build docker image
         if: success()
         run: |
-          docker build -t ml/sentiment-analysis-app .
-      
-      - name: tag-docker-image
-        if: success()
-        run: |
-          docker tag ml/sentiment-analysis-app:latest 660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:latest
+          docker build \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
       
       - name: push docker image to AWS ECR
-        if: success()
         run: |
-          docker push 660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
 

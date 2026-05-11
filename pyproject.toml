@@ -68,11 +68,6 @@ pipeline = [
   "awscli",
 ]
 
-deployment = [
-"awscli",
-]
-
-
 dev = [
   "matplotlib",
   "seaborn",
