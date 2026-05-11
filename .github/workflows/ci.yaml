@@ -429,4 +429,4 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:${{ github.sha }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest
           
-
+# steps needs to be applied for pushing docker image to AWS ECR instead of Dockerhub
