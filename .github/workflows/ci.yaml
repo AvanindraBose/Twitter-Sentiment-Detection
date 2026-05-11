@@ -40,8 +40,6 @@ jobs:
               - 'backend/**'
               - 'tests/api/**'
               - 'tests/conftest.py'
-              - 'pyproject.toml'
-              - 'uv.lock'
             ml:
               - 'src/**'
               - 'data/**'
@@ -52,8 +50,6 @@ jobs:
               - 'tests/model/**'
               - 'backend/loader/artifacts_loader.py'
               - 'backend/services/model_service.py'
-              - 'pyproject.toml'
-              - 'uv.lock'
             container:
               - 'Dockerfile'
               - 'Docker-compose.yaml'
@@ -394,10 +390,47 @@ jobs:
           name: post-promotion-api-logs
           path: logs/
   
-  dockerizing-api:
+  # dockerizing-api:
+  #   needs:
+  #     - changes
+  #     - post-promotion-api-checks
+  #   if: always() && 
+  #       (github.event_name == 'push') &&
+  #       (github.ref == 'refs/heads/main') && 
+  #       (
+  #         needs.post-promotion-api-checks.result == 'success' || 
+  #         needs.changes.outputs.container == 'true'
+  #       )
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: checkout code
+  #       uses: actions/checkout@v4
+
+  #     - name: login to docker
+  #       if: success()
+  #       uses: docker/login-action@v3
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      
+  #     - name: Build Docker Image
+  #       if: success()
+  #       run: |
+  #         docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:${{ github.sha }} \
+  #                      -t ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest .
+      
+  #     - name: Push Docker Image to DockerHub
+  #       if: success()
+  #       run: |
+  #         docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:${{ github.sha }}
+  #         docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest
+          
+# steps needs to be applied for pushing docker image to AWS ECR instead of Dockerhub
+  dockerizing-api-ecr:
     needs:
       - changes
       - post-promotion-api-checks
+    
     if: always() && 
         (github.event_name == 'push') &&
         (github.ref == 'refs/heads/main') && 
@@ -405,28 +438,31 @@ jobs:
           needs.post-promotion-api-checks.result == 'success' || 
           needs.changes.outputs.container == 'true'
         )
+
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
         uses: actions/checkout@v4
+      
+      - name: download aws cli
+        uses: uv sync --deployment
+      
+      - name: login to AWS ECR
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_key_id ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 660838764267.dkr.ecr.eu-north-1.amazonaws.com
+      
+      - name: build docker image
+        run: |
+          docker build -t ml/sentiment-analysis-app .
+      
+      - name: tag-docker-image
+        run: |
+          docker tag ml/sentiment-analysis-app:latest 660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:latest
+      
+      - name: push docker image to AWS ECR
+        run: |
+          docker push 660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:latest
 
-      - name: login to docker
-        if: success()
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      
-      - name: Build Docker Image
-        if: success()
-        run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:${{ github.sha }} \
-                       -t ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest .
-      
-      - name: Push Docker Image to DockerHub
-        if: success()
-        run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:${{ github.sha }}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest
-          
-# steps needs to be applied for pushing docker image to AWS ECR instead of Dockerhub
+
