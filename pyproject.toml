@@ -13,7 +13,7 @@ license = {text = "MIT"}
 
 requires-python = ">=3.10"
 
-# ✅ ONLY API + INFERENCE DEPENDENCIES
+# ONLY API + INFERENCE DEPENDENCIES
 dependencies = [
   # CLI (optional but lightweight)
   "typer",
