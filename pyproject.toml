@@ -50,7 +50,7 @@ dependencies = [
   "pyyaml",
 ]
 
-# ✅ OPTIONAL GROUPS FOR TRAINING / PIPELINES
+# OPTIONAL GROUPS FOR TRAINING / PIPELINES
 [project.optional-dependencies]
 
 ml = [
