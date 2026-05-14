@@ -480,31 +480,44 @@ jobs:
           IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker push "${IMAGE_URI}:${GITHUB_SHA}"
           docker push "${IMAGE_URI}:latest"
-  
+  # SSH Based deployment to EC2 instance
   deploying-to-ec2:
     needs:
       - dockerizing-api-ecr
-    if: always() && 
+    if: 
+        always() &&
         (github.event_name == 'push') &&
-        (github.ref == 'refs/heads/main') && 
+        (github.ref == 'refs/heads/main') &&
         needs.dockerizing-api-ecr.result == 'success'
     runs-on: ubuntu-latest
 
     env: 
-        AWS_REGION: eu-north-1
-        ECR_REGISTRY: 660838764267.dkr.ecr.eu-north-1.amazonaws.com
-        ECR_REPOSITORY: ml/sentiment-analysis-app
+      AWS_REGION: eu-north-1
+      ECR_REGISTRY: 660838764267.dkr.ecr.eu-north-1.amazonaws.com
+      COMPOSE_S3_URI: s3://sentiment-analysis-docker-compose-bucket
 
     steps:
-      - name: checkout code
-        uses: actions/checkout@v4
-      
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: SSH and deploy to EC2 instance
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            cd /home/ubuntu
+
+            aws s3 cp ${{ env.COMPOSE_S3_URI }}/docker-compose.yaml ./docker-compose.yaml
+
+            aws s3 cp ${{ env.COMPOSE_S3_URI }}/.env ./.env
+
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+
+            docker compose pull api
+            docker compose up -d
+            docker image prune -f
       
     
 
