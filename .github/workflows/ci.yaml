@@ -480,5 +480,32 @@ jobs:
           IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker push "${IMAGE_URI}:${GITHUB_SHA}"
           docker push "${IMAGE_URI}:latest"
+  
+  deploying-to-ec2:
+    needs:
+      - dockerizing-api-ecr
+    if: always() && 
+        (github.event_name == 'push') &&
+        (github.ref == 'refs/heads/main') && 
+        needs.dockerizing-api-ecr.result == 'success'
+    runs-on: ubuntu-latest
+
+    env: 
+        AWS_REGION: eu-north-1
+        ECR_REGISTRY: 660838764267.dkr.ecr.eu-north-1.amazonaws.com
+        ECR_REPOSITORY: ml/sentiment-analysis-app
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+      
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+    
 
 
