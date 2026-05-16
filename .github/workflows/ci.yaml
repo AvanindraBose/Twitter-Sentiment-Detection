@@ -516,6 +516,7 @@ jobs:
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
             docker compose pull api
+            docker compose down --remove-orphans
             docker compose up -d
             docker image prune -f
       
