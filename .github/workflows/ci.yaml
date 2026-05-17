@@ -467,6 +467,11 @@ jobs:
       - name: login to aws ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: push existing docker-compose script to aws s3 bucket
+        run: |
+          aws s3 cp Docker-compose.yaml s3://sentiment-analysis-docker-compose-bucket/docker-compose.yaml
+          aws s3 cp .env s3://sentiment-analysis-docker-compose-bucket/.env
+
       - name: build docker image
         if: success()
         run: |
