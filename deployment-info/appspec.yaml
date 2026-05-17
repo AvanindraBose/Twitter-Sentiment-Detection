@@ -1,0 +1,16 @@
+version: 2.0
+os: linux
+
+files:
+  - source: /
+    destination: /home/ubuntu/app
+
+hooks:
+  BeforeInstall:
+    - location: deployment-info/scripts/install_dependencies.sh
+      timeout: 300
+      runas: ubuntu
+  AfterInstall:
+    - location: deployment-info/scripts/start_docker.sh
+      timeout: 300
+      runas: ubuntu
