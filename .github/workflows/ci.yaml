@@ -494,6 +494,7 @@ jobs:
         (github.event_name == 'push') &&
         (github.ref == 'refs/heads/main') &&
         needs.dockerizing-api-ecr.result == 'success'
+        
     runs-on: ubuntu-latest
 
     env: 
