@@ -10,7 +10,7 @@ on:
   # workflow_dispatch:
   
 
-    
+
 jobs:
 
   ci-lint:
@@ -479,7 +479,7 @@ jobs:
           IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker build \
             -t "${IMAGE_URI}:${{ github.sha }}" \
-            -t "${IMAGE_URI}:latest" .
+            -t "${IMAGE_URI}:v1" .
       
       - name: push docker image to AWS ECR
         run: |
@@ -487,45 +487,45 @@ jobs:
           docker push "${IMAGE_URI}:${GITHUB_SHA}"
           docker push "${IMAGE_URI}:latest"
   # SSH Based deployment to EC2 instance
-  deploying-to-ec2:
-    needs:
-      - dockerizing-api-ecr
-    if: 
-        always() &&
-        (github.event_name == 'push') &&
-        (github.ref == 'refs/heads/main') &&
-        needs.dockerizing-api-ecr.result == 'success'
+  # deploying-to-ec2:
+  #   needs:
+  #     - dockerizing-api-ecr
+  #   if: 
+  #       always() &&
+  #       (github.event_name == 'push') &&
+  #       (github.ref == 'refs/heads/main') &&
+  #       needs.dockerizing-api-ecr.result == 'success'
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    env: 
-      AWS_REGION: eu-north-1
-      ECR_REGISTRY: 660838764267.dkr.ecr.eu-north-1.amazonaws.com
-      COMPOSE_S3_URI: s3://sentiment-analysis-docker-compose-bucket
+  #   env: 
+  #     AWS_REGION: eu-north-1
+  #     ECR_REGISTRY: 660838764267.dkr.ecr.eu-north-1.amazonaws.com
+  #     COMPOSE_S3_URI: s3://sentiment-analysis-docker-compose-bucket
 
-    steps:
-      - name: SSH and deploy to EC2 instance
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            set -e
+  #   steps:
+  #     - name: SSH and deploy to EC2 instance
+  #       uses: appleboy/ssh-action@v1.0.3
+  #       with:
+  #         host: ${{ secrets.EC2_HOST }}
+  #         username: ${{ secrets.EC2_USER }}
+  #         key: ${{ secrets.EC2_SSH_KEY }}
+  #         port: 22
+  #         script: |
+  #           set -e
 
-            cd /home/ubuntu
+  #           cd /home/ubuntu
 
-            aws s3 cp ${{ env.COMPOSE_S3_URI }}/docker-compose.yaml ./docker-compose.yaml
+  #           aws s3 cp ${{ env.COMPOSE_S3_URI }}/docker-compose.yaml ./docker-compose.yaml
 
-            aws s3 cp ${{ env.COMPOSE_S3_URI }}/.env ./.env
+  #           aws s3 cp ${{ env.COMPOSE_S3_URI }}/.env ./.env
 
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+  #           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
-            docker compose pull api
-            docker compose down --remove-orphans
-            docker compose up -d
-            docker image prune -f
+  #           docker compose pull api
+  #           docker compose down --remove-orphans
+  #           docker compose up -d
+  #           docker image prune -f
       
     
 
