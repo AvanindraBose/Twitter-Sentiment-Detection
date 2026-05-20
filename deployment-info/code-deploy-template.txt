@@ -1,0 +1,29 @@
+#!/bin/bash
+# Update the package list
+sudo apt-get update -y
+
+# Install Ruby (required by the CodeDeploy agent)
+sudo apt-get install ruby wget -y
+
+# Create symlink so installer passes Ruby version check
+sudo ln -sf /usr/bin/ruby /usr/bin/ruby3.2
+
+# Download the CodeDeploy agent installer from the correct region
+wget https://aws-codedeploy-eu-north-1.s3.eu-north-1.amazonaws.com/latest/install
+
+# Make the installer executable
+chmod +x ./install
+
+# Run installer (will download the latest .deb)
+sudo ./install auto
+
+# Force install the downloaded deb ignoring Ruby dependency metadata
+wget https://aws-codedeploy-eu-north-1.s3.eu-north-1.amazonaws.com/releases/codedeploy-agent_1.8.1-26_all.deb
+sudo dpkg --force-all -i codedeploy-agent_1.8.1-26_all.deb
+
+# Enable and start the CodeDeploy agent
+sudo systemctl enable codedeploy-agent
+sudo systemctl start codedeploy-agent
+
+-- to test the agent
+sudo systemctl status codedeploy-agent
