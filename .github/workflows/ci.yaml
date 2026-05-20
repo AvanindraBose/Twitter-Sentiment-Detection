@@ -485,7 +485,7 @@ jobs:
         run: |
           IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker push "${IMAGE_URI}:${GITHUB_SHA}"
-          docker push "${IMAGE_URI}:latest"
+          docker push "${IMAGE_URI}:v1"
   # SSH Based deployment to EC2 instance
   # deploying-to-ec2:
   #   needs:
