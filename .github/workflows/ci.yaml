@@ -57,7 +57,7 @@ jobs:
               - 'uv.lock'
             container:
               - 'Dockerfile'
-              - 'Docker-compose.yaml'
+              - 'docker-compose.yaml'
               - '.dockerignore'
 
   ml-pipeline:
