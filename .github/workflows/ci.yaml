@@ -541,13 +541,13 @@ jobs:
           IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker build \
             -t "${IMAGE_URI}:${{ github.sha }}" \
-            -t "${IMAGE_URI}:v1" .
+            -t "${IMAGE_URI}:v2" .
       
       - name: push docker image to AWS ECR
         run: |
           IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker push "${IMAGE_URI}:${GITHUB_SHA}"
-          docker push "${IMAGE_URI}:v1"
+          docker push "${IMAGE_URI}:v2"
   # SSH Based deployment to EC2 instance
   # deploying-to-ec2:
   #   needs:
