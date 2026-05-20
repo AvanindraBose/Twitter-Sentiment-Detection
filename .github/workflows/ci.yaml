@@ -468,6 +468,70 @@ jobs:
       - name: login to aws ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: create deployment env file
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          JWT_ACCESS_SECRET_KEY: ${{ secrets.JWT_ACCESS_SECRET_KEY }}
+          JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          LOGIN_RATE_LIMIT: ${{ secrets.LOGIN_RATE_LIMIT || '5' }}
+          LOGIN_RATE_WINDOW: ${{ secrets.LOGIN_RATE_WINDOW || '60' }}
+          REFRESH_RATE_LIMIT: ${{ secrets.REFRESH_RATE_LIMIT || '10' }}
+          REFRESH_RATE_WINDOW: ${{ secrets.REFRESH_RATE_WINDOW || '300' }}
+          PREDICT_RATE_LIMIT: ${{ secrets.PREDICT_RATE_LIMIT || '50' }}
+          PREDICT_RATE_WINDOW: ${{ secrets.PREDICT_RATE_WINDOW || '60' }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+          REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
+          DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
+        run: |
+          required_vars=(
+            API_KEY
+            JWT_ACCESS_SECRET_KEY
+            JWT_REFRESH_SECRET_KEY
+            REDIS_URL
+            DATABASE_URL
+            POSTGRES_USER
+            POSTGRES_PASSWORD
+            POSTGRES_DB
+            MLFLOW_TRACKING_URI
+            ACCESS_TOKEN_EXPIRE_MINUTES
+            REFRESH_TOKEN_EXPIRE_DAYS
+            DAGSHUB_PAT
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            if [ -z "${!var_name}" ]; then
+              echo "Missing required GitHub Secret: ${var_name}"
+              exit 1
+            fi
+          done
+
+          {
+            echo "API_KEY=${API_KEY}"
+            echo "JWT_ACCESS_SECRET_KEY=${JWT_ACCESS_SECRET_KEY}"
+            echo "JWT_REFRESH_SECRET_KEY=${JWT_REFRESH_SECRET_KEY}"
+            echo "REDIS_URL=${REDIS_URL}"
+            echo "DATABASE_URL=${DATABASE_URL}"
+            echo "POSTGRES_USER=${POSTGRES_USER}"
+            echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+            echo "POSTGRES_DB=${POSTGRES_DB}"
+            echo "MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}"
+            echo "LOGIN_RATE_LIMIT=${LOGIN_RATE_LIMIT}"
+            echo "LOGIN_RATE_WINDOW=${LOGIN_RATE_WINDOW}"
+            echo "REFRESH_RATE_LIMIT=${REFRESH_RATE_LIMIT}"
+            echo "REFRESH_RATE_WINDOW=${REFRESH_RATE_WINDOW}"
+            echo "PREDICT_RATE_LIMIT=${PREDICT_RATE_LIMIT}"
+            echo "PREDICT_RATE_WINDOW=${PREDICT_RATE_WINDOW}"
+            echo "ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}"
+            echo "REFRESH_TOKEN_EXPIRE_DAYS=${REFRESH_TOKEN_EXPIRE_DAYS}"
+            echo "DAGSHUB_PAT=${DAGSHUB_PAT}"
+          } > .env
+
       - name: push existing docker-compose script to aws s3 bucket
         run: |
           aws s3 cp docker-compose.yaml s3://sentiment-analysis-docker-compose-bucket/docker-compose.yaml
