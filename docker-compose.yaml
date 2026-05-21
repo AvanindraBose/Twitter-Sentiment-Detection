@@ -1,6 +1,4 @@
 name: Twitter-Sentiment-Analysis
-# Testing
-
 services:
   api:
     image: 660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:v2
