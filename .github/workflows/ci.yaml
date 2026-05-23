@@ -57,6 +57,7 @@ jobs:
               - 'Dockerfile'
               - 'docker-compose.yaml'
               - '.dockerignore'
+              - '.github/ecs/**'
 
   ml-pipeline:
     needs: changes
@@ -431,19 +432,24 @@ jobs:
   #         docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:${{ github.sha }}
   #         docker push ${{ secrets.DOCKERHUB_USERNAME }}/twitter-sentiment-analysis-api:latest
           
-# steps needs to be applied for pushing docker image to AWS ECR instead of Dockerhub
-  dockerizing-api-ecr:
+  deploy-api-to-ecs:
     needs:
       - changes
+      - docker-build-check
       - post-promotion-api-checks
     
-    if: always() && 
-        (github.event_name == 'push') &&
-        (github.ref == 'refs/heads/main') && 
-        (
-          needs.post-promotion-api-checks.result == 'success' || 
-          needs.changes.outputs.container == 'true'
+    if: >-
+      always() &&
+      (github.event_name == 'push') &&
+      (github.ref == 'refs/heads/main') &&
+      (
+        needs.post-promotion-api-checks.result == 'success' ||
+          (
+            needs.changes.outputs.container == 'true' &&
+            needs.docker-build-check.result == 'success'
+          )
         )
+      )
 
     runs-on: ubuntu-latest
 
@@ -451,6 +457,11 @@ jobs:
       AWS_REGION: eu-north-1
       ECR_REGISTRY: 660838764267.dkr.ecr.eu-north-1.amazonaws.com
       ECR_REPOSITORY: ml/sentiment-analysis-app
+      DEPLOYMENT_S3_BUCKET: sentiment-analysis-docker-compose-bucket
+      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+      ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+      ECS_TASK_DEFINITION: .github/ecs/twitter-sentiment-containers-revision8.json
+      CONTAINER_NAME: fast-api
 
     steps:
       - name: checkout code
@@ -471,8 +482,8 @@ jobs:
           API_KEY: ${{ secrets.API_KEY }}
           JWT_ACCESS_SECRET_KEY: ${{ secrets.JWT_ACCESS_SECRET_KEY }}
           JWT_REFRESH_SECRET_KEY: ${{ secrets.JWT_REFRESH_SECRET_KEY }}
-          REDIS_URL: ${{ secrets.REDIS_URL }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.AWS_ECS_REDIS_URL }}
+          DATABASE_URL: ${{ secrets.AWS_ECS_DATABASE_URL }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -530,10 +541,10 @@ jobs:
             echo "DAGSHUB_PAT=${DAGSHUB_PAT}"
           } > .env
 
-      - name: push existing docker-compose script to aws s3 bucket
+      - name: upload deployment files to s3
         run: |
-          aws s3 cp docker-compose.yaml s3://sentiment-analysis-docker-compose-bucket/docker-compose.yaml
-          aws s3 cp .env s3://sentiment-analysis-docker-compose-bucket/.env
+          aws s3 cp docker-compose.yaml "s3://${DEPLOYMENT_S3_BUCKET}/docker-compose.yaml"
+          aws s3 cp .env "s3://${DEPLOYMENT_S3_BUCKET}/.env"
 
       - name: build docker image
         if: success()
@@ -541,13 +552,29 @@ jobs:
           IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker build \
             -t "${IMAGE_URI}:${{ github.sha }}" \
-            -t "${IMAGE_URI}:v2" .
+            -t "${IMAGE_URI}:latest" .
       
       - name: push docker image to AWS ECR
         run: |
           IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
           docker push "${IMAGE_URI}:${GITHUB_SHA}"
-          docker push "${IMAGE_URI}:v2"
+          docker push "${IMAGE_URI}:latest"
+
+      - name: fill in new image id in ecs task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: deploy ecs task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
   # SSH Based deployment to EC2 instance
   # deploying-to-ec2:
   #   needs:
