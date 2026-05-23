@@ -2,7 +2,7 @@
     "containerDefinitions": [
         {
             "name": "fast-api",
-            "image": "660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:v1",
+            "image":"660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:v1",
             "cpu": 0,
             "portMappings": [
                 {
