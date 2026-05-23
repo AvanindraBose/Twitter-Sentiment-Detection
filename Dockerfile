@@ -28,6 +28,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
+    
 COPY --from=builder /app/.venv ./.venv
 COPY --from=builder /usr/local/share/nltk_data /usr/local/share/nltk_data
 COPY ./backend/ backend/
