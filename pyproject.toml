@@ -25,6 +25,9 @@ dependencies = [
   "pydantic[email]",
   "python-multipart",
 
+  # monitoring
+  "prometheus-fastapi-instrumentator",
+
   # Auth & security
   "python-jose[cryptography]",
   "bcrypt",
