@@ -11,6 +11,7 @@ from backend.logging_fastapi.logger_api import prediction_logger
 from backend.core.security import make_cache_key
 from backend.cache.redis_model_cache import get_cached_prediction,set_cached_prediction
 from fastapi.concurrency import run_in_threadpool
+from backend.custom_metrics import TOKENS_COUNTER
 
 def lemmatization(text):
     """Lemmatize the text."""
@@ -65,11 +66,7 @@ def normalize_text(text):
     return text
 
 def run_model_prediction(model,features):
-    features_df = pd.DataFrame(
-            features.toarray(),
-            columns=[str(i) for i in range(features.shape[1])]
-        )
-    pred = model.predict(features_df)
+    pred = model.predict(features.toarray())
 
     return pred
 
@@ -92,13 +89,17 @@ async def predict_sentiment(data: dict) -> dict:
         if not text:
             raise ValueError("Input text is empty")
 
-        prediction_logger.save_logs("Input received for prediction", "info")
-
     except Exception as e:
         prediction_logger.save_logs(
             f"[INPUT ERROR] Failed to read input: {str(e)}", "error"
         )
         raise
+    
+    else:
+        prediction_logger.save_logs("Input received for prediction", "info")
+        input_char = str.split(text)
+        lt = len(input_char)
+        TOKENS_COUNTER.inc(lt)
 
     try:
         model, vectorizer = await get_artifacts()
@@ -143,7 +144,7 @@ async def predict_sentiment(data: dict) -> dict:
             "info"
         )
 
-        result = {"prediction": prediction[0]}
+        result = {"prediction": int(prediction[0])}
 
         await set_cached_prediction(key,result)
 

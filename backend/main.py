@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.logging_fastapi.logger_api import auth_logger
 from contextlib import asynccontextmanager
 from backend.loader.redis_loader import close_redis_client
+from prometheus_fastapi_instrumentator import Instrumentator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Twitter Sentiment Detection API", description="API for detecting sentiment in tweets", version="1.0",lifespan=lifespan)
 app.add_middleware(ResponseLoggerMiddleware)
+Instrumentator().instrument(app).expose(app)
 
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 app.add_middleware(ResponseLoggerMiddleware)

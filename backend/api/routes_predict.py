@@ -5,11 +5,13 @@ from backend.logging_fastapi.logger_api import prediction_logger
 from backend.core.dependencies import get_current_user
 from backend.services.model_service import predict_sentiment
 from backend.core.rate_limiter import predict_rate_limiter
+from backend.custom_metrics import RESPONSE_LATENCY,HAPPY_COUNTER,SAD_COUNTER
 
 router = APIRouter(tags=["Predict"])
 templates = Jinja2Templates(directory="backend/templates")
 
 @router.post("/predict", response_class=HTMLResponse)
+@RESPONSE_LATENCY.time()
 async def prediction(request: Request, text: str = Form(...) , _ = Depends(predict_rate_limiter)):
     try:
         user_id = get_current_user(request)
@@ -64,6 +66,11 @@ async def prediction(request: Request, text: str = Form(...) , _ = Depends(predi
             "Prediction made successfully",
             log_level="info"
         )
+
+        if result["prediction"] == 1 :
+            HAPPY_COUNTER.inc()
+        else:
+            SAD_COUNTER.inc()
 
         return templates.TemplateResponse(
             request=request,
