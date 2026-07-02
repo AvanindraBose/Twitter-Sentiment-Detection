@@ -54,14 +54,21 @@ TOKEN_COUNT_HISTOGRAM = Histogram(
     buckets=[10, 25, 50, 100, 200, 500, 1000, float("inf")]
 )
 
-# ── Cache Metrics ─────────────────────────────────────────
-CACHE_HITS = Counter(
+# Cache metrics
+CACHE_HIT = Counter(
     name="cache_hits_total",
-    documentation="Total count of cache hits",
+    documentation="Total number of cache hits",
+    labelnames=["endpoint"],
 )
 
 CACHE_MISS = Counter(
-    name="cache_miss_total",
-    documentation="Total count of cache misses",
+    name="cache_misses_total",
+    documentation="Total number of cache misses",
+    labelnames=["endpoint"],
 )
 
+CACHE_WRITES = Counter(
+    name="cache_writes_total",
+    documentation="Total number of cache writes",
+    labelnames=["endpoint"],
+)
