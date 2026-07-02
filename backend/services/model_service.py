@@ -11,7 +11,7 @@ from backend.logging_fastapi.logger_api import prediction_logger
 from backend.core.security import make_cache_key
 from backend.cache.redis_model_cache import get_cached_prediction,set_cached_prediction
 from fastapi.concurrency import run_in_threadpool
-from backend.custom_metrics import TOKENS_COUNTER
+from backend.custom_metrics import TOKENS_COUNTER,TOKEN_COUNT_HISTOGRAM
 
 def lemmatization(text):
     """Lemmatize the text."""
@@ -100,6 +100,7 @@ async def predict_sentiment(data: dict) -> dict:
         input_char = str.split(text)
         lt = len(input_char)
         TOKENS_COUNTER.inc(lt)
+        TOKEN_COUNT_HISTOGRAM.observe(lt)
 
     try:
         model, vectorizer = await get_artifacts()

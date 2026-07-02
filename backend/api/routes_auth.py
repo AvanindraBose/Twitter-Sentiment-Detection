@@ -1,3 +1,4 @@
+import time
 from fastapi import APIRouter,HTTPException,status,Depends,Request,Form
 from fastapi.responses import RedirectResponse,HTMLResponse
 from backend.core.security import create_access_tokens, create_refresh_tokens,verify_refresh_token,verify_password,hash_password,hash_refresh_token,verify_hashed_refresh_token
@@ -13,6 +14,12 @@ from backend.core.rate_limiter import login_rate_limiter , refresh_rate_limiter
 from backend.logging_fastapi.logger_api import auth_logger
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
+from backend.custom_metrics import (
+    REQUEST_COUNT,
+    REQUEST_DURATION,
+    REQUEST_ERRORS,
+    RESPONSE_STATUS,
+)
 
 
 router = APIRouter(prefix="/auth",tags=["Auth"])
@@ -22,15 +29,45 @@ templates = Jinja2Templates(directory="backend/templates")
 ACCESS_COOKIE_NAME = "access_token"
 REFRESH_COOKIE_NAME = "refresh_token"
 
+
+def _record_auth_metrics(
+    request: Request,
+    endpoint: str,
+    status_code: int,
+    start_time: float,
+    error_type: str | None = None,
+):
+    method = request.method
+    REQUEST_COUNT.labels(method=method, endpoint=endpoint).inc()
+    RESPONSE_STATUS.labels(method=method, endpoint=endpoint, status_code=str(status_code)).inc()
+    if error_type:
+        REQUEST_ERRORS.labels(method=method, endpoint=endpoint, error_type=error_type).inc()
+    REQUEST_DURATION.labels(method=method, endpoint=endpoint).observe(time.perf_counter() - start_time)
+
+
 @router.get("/signup",response_class=HTMLResponse)
 async def signup_page(request:Request):
-    return templates.TemplateResponse(
-        request=request,
-        name = "signup.html",
-    )
+    endpoint = "/auth/signup"
+    start_time = time.perf_counter()
+    method = request.method
+    REQUEST_COUNT.labels(method=method, endpoint=endpoint).inc()
+    try:
+        response = templates.TemplateResponse(
+            request=request,
+            name = "signup.html",
+        )
+        _record_auth_metrics(request, endpoint, response.status_code, start_time)
+        return response
+    except Exception as exc:
+        _record_auth_metrics(request, endpoint, status.HTTP_500_INTERNAL_SERVER_ERROR, start_time, error_type=type(exc).__name__)
+        raise
 
 @router.get("/login",response_class=HTMLResponse)
 async def login_page(request:Request):
+    endpoint = "/auth/login"
+    start_time = time.perf_counter()
+    method = request.method
+    REQUEST_COUNT.labels(method=method, endpoint=endpoint).inc()
     success = None
     info = None
     error = None
@@ -50,11 +87,17 @@ async def login_page(request:Request):
     if request.query_params.get("refresh") == "service_unavailable":
         error = "Session service is temporarily unavailable. Please log in again later."
     
-    return templates.TemplateResponse(
-    request=request,
-    name="login.html",
-    context={"success": success, "info": info, "error": error}
-    )
+    try:
+        response = templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={"success": success, "info": info, "error": error}
+        )
+        _record_auth_metrics(request, endpoint, response.status_code, start_time)
+        return response
+    except Exception as exc:
+        _record_auth_metrics(request, endpoint, status.HTTP_500_INTERNAL_SERVER_ERROR, start_time, error_type=type(exc).__name__)
+        raise
 
 @router.post("/signup",response_class=HTMLResponse)
 async def signup(request:Request, 
@@ -62,6 +105,9 @@ async def signup(request:Request,
                 email: str = Form(...),
                 password: str = Form(...), 
                 db:AsyncSession = Depends(get_db)):
+    endpoint = "/auth/signup"
+    start_time = time.perf_counter()
+    REQUEST_COUNT.labels(method=request.method, endpoint=endpoint).inc()
     
     try:
         user_input = UserCreate(
@@ -72,6 +118,7 @@ async def signup(request:Request,
     except ValidationError as exc:
         error_message = exc.errors()[0]['msg']
         auth_logger.save_logs(f"User Creation Failed - Validation Error: {error_message}", log_level="error")
+        _record_auth_metrics(request, endpoint, status.HTTP_400_BAD_REQUEST, start_time, error_type="ValidationError")
         return templates.TemplateResponse(
                 request=request,
                 name="signup.html",
@@ -85,6 +132,7 @@ async def signup(request:Request,
 
     if existing_user:
         auth_logger.save_logs(f"User Creation Failed - Email already exists", log_level="error")
+        _record_auth_metrics(request, endpoint, status.HTTP_400_BAD_REQUEST, start_time, error_type="email_exists")
         return templates.TemplateResponse(
             request = request ,
             name="signup.html",
@@ -114,6 +162,7 @@ async def signup(request:Request,
             log_level="error"
         )
         
+        _record_auth_metrics(request, endpoint, status.HTTP_500_INTERNAL_SERVER_ERROR, start_time, error_type="db_error")
         return templates.TemplateResponse(
             request = request,
             name = "signup.html",
@@ -124,6 +173,7 @@ async def signup(request:Request,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
+    _record_auth_metrics(request, endpoint, status.HTTP_303_SEE_OTHER, start_time)
     return RedirectResponse(
         url="/auth/login?signup=success",
         status_code=status.HTTP_303_SEE_OTHER
@@ -135,7 +185,11 @@ async def login(request:Request ,
                 password: str = Form(...),
                 db:AsyncSession = Depends(get_db) , 
                 _ = Depends(login_rate_limiter)):
+    endpoint = "/auth/login"
+    start_time = time.perf_counter()
+    REQUEST_COUNT.labels(method=request.method, endpoint=endpoint).inc()
     if _ == "rate_limited":
+        _record_auth_metrics(request, endpoint, status.HTTP_429_TOO_MANY_REQUESTS, start_time, error_type="rate_limited")
         return templates.TemplateResponse(
             request=request,
             name="login.html",
@@ -144,6 +198,7 @@ async def login(request:Request ,
         )
 
     if _ == "redis_unavailable":
+        _record_auth_metrics(request, endpoint, status.HTTP_503_SERVICE_UNAVAILABLE, start_time, error_type="redis_unavailable")
         return templates.TemplateResponse(
             request=request,
             name="login.html",
@@ -159,6 +214,7 @@ async def login(request:Request ,
     except ValidationError as exc:
         error_msg = exc.errors()[0]["msg"]
         auth_logger.save_logs(f"User Login Falied : Validation Error {error_msg}")
+        _record_auth_metrics(request, endpoint, status.HTTP_400_BAD_REQUEST, start_time, error_type="ValidationError")
         return templates.TemplateResponse(
             request = request,
             name = "login.html",
@@ -175,6 +231,7 @@ async def login(request:Request ,
 
     if not db_user:
         auth_logger.save_logs(f"Login Failed - User not found", log_level="error")
+        _record_auth_metrics(request, endpoint, status.HTTP_401_UNAUTHORIZED, start_time, error_type="user_not_found")
         
         return templates.TemplateResponse(
             request = request,
@@ -193,6 +250,7 @@ async def login(request:Request ,
 
     if not password_valid:
         auth_logger.save_logs(f"Login Failed - Invalid password for user", log_level="error")
+        _record_auth_metrics(request, endpoint, status.HTTP_401_UNAUTHORIZED, start_time, error_type="invalid_password")
         # raise HTTPException(
         #     status_code=status.HTTP_401_UNAUTHORIZED,
         #     detail = "Invalid credentials"
@@ -241,6 +299,7 @@ async def login(request:Request ,
         #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         #     detail = "Could not create tokens , please try again"
         # )
+        _record_auth_metrics(request, endpoint, status.HTTP_500_INTERNAL_SERVER_ERROR, start_time, error_type="db_error")
         return templates.TemplateResponse(
             request= request,
             name = "login.html",
@@ -281,21 +340,27 @@ async def login(request:Request ,
         path = "/"
         # max_age = refresh_max_age
     )
+    _record_auth_metrics(request, endpoint, status.HTTP_303_SEE_OTHER, start_time)
     return response
 
 
 @router.get("/refresh")
 async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_db), _= Depends(refresh_rate_limiter)):
+    endpoint = "/auth/refresh"
+    start_time = time.perf_counter()
+    REQUEST_COUNT.labels(method=request.method, endpoint=endpoint).inc()
     auth_logger.save_logs("Hit Refresh Endpoint" , log_level="info")
     next_url = request.query_params.get("next","/")
 
     if _ == "rate_limited":
+        _record_auth_metrics(request, endpoint, status.HTTP_303_SEE_OTHER, start_time, error_type="rate_limited")
         return RedirectResponse(
             url="/auth/login?refresh=rate_limited",
             status_code=status.HTTP_303_SEE_OTHER
         )
 
     if _ == "redis_unavailable":
+        _record_auth_metrics(request, endpoint, status.HTTP_303_SEE_OTHER, start_time, error_type="redis_unavailable")
         return RedirectResponse(
             url="/auth/login?refresh=service_unavailable",
             status_code=status.HTTP_303_SEE_OTHER
@@ -308,6 +373,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
 
     if not refresh_token:
      auth_logger.save_logs(f"Token Refresh Failed - No refresh token provided", log_level="error")
+     _record_auth_metrics(request, endpoint, status.HTTP_303_SEE_OTHER, start_time, error_type="missing_refresh_token")
      return RedirectResponse(
          url = "/auth/login?session=expired",
          status_code=status.HTTP_303_SEE_OTHER
@@ -324,6 +390,7 @@ async def refresh_access_tokens(request:Request, db:AsyncSession = Depends(get_d
 # Using Nested Dependecies
     if payload is None :
         auth_logger.save_logs(f"Token Refresh Failed - Invalid or expired refresh token", log_level="error")
+        _record_auth_metrics(request, endpoint, status.HTTP_303_SEE_OTHER, start_time, error_type="invalid_refresh_token")
         response = RedirectResponse(
             url="/auth/login?session=expired",
             status_code=status.HTTP_303_SEE_OTHER
@@ -460,6 +527,9 @@ async def logout(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
+    endpoint = "/auth/logout"
+    start_time = time.perf_counter()
+    REQUEST_COUNT.labels(method=request.method, endpoint=endpoint).inc()
     refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
 
     if refresh_token:
@@ -515,4 +585,5 @@ async def logout(
         samesite="lax"
     )
     
+    _record_auth_metrics(request, endpoint, status.HTTP_303_SEE_OTHER, start_time)
     return response
