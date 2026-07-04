@@ -1,10 +1,9 @@
 name: Twitter-Sentiment-Analysis
 services:
   api:
-    image: 660838764267.dkr.ecr.eu-north-1.amazonaws.com/ml/sentiment-analysis-app:v2
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: fast-api
     ports:
       - "8000:8000"
@@ -47,6 +46,34 @@ services:
       retries: 10
     networks:
       - backend
+
+  # ── Redis Exporter ─────────────────────────────────────────────────────────
+  redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: "redis1:6379"   # use container_name of your redis service
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - backend                   # same network as redis ✅
+
+  # ── Postgres Exporter ──────────────────────────────────────────────────────
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres1:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend                   # same network as postgres ✅
 
 volumes:
   postgres_data:
