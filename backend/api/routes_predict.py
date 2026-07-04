@@ -118,4 +118,3 @@ async def prediction(request: Request, text: str = Form(...) , _ = Depends(predi
         )
     finally:
         REQUEST_DURATION.labels(method=method,endpoint=endpoint).observe(time.perf_counter() - start_time)
-        MODEL_INFERENCE_DURATION.observe(time.perf_counter() - start_time)
