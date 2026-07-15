@@ -1,7 +1,9 @@
 Emotion-Detection
 ==============================
 
-This project is an E2E MLOps solution which will detect the emotions after reading comments
+This project is an E2E MLOps solution which will detect the emotions after reading twitter comments.
+
+The correct architechture for this repo will be updated in the future version.
 
 Project Organization
 ------------
