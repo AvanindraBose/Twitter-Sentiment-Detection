@@ -3,7 +3,31 @@ Emotion-Detection
 
 This project is an E2E MLOps solution which will detect the emotions after reading twitter comments.
 
-The correct architechture for this repo will be updated in the future version.
+The correct architecture for this repo will be updated in a future version.
+
+FastAPI Prediction Routes
+------------
+
+The HTML form posts one tweet to `/predict`. API clients that collect tweet rows
+with [Xquik](https://github.com/Xquik-dev/x-twitter-scraper) can post a batch to
+`/api/predict/xquik` after signing in:
+
+```json
+{
+  "tweets": [
+    {
+      "tweet_id": "174",
+      "tweet_text": "Markets like this product update."
+    }
+  ]
+}
+```
+
+The endpoint also accepts `text`, `full_text`, or `content` as the tweet body
+field. Empty rows are skipped, requests are limited to 100 rows, and a request
+with no readable text returns 422.
+
+Xquik is an independent third-party service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.
 
 Project Organization
 ------------
