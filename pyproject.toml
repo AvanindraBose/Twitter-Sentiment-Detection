@@ -87,11 +87,8 @@ test = [
 ]
 
 [project.urls]
-bugs = "https://github.com/AvanindraBose/Subscribly/issues"
-homepage = "https://github.com/AvanindraBose/Subscribly"
-
-[project.scripts]
-Subscribly = "Subscribly.cli:app"
+bugs = "https://github.com/AvanindraBose/Twitter-Sentiment-Detection/issues"
+homepage = "https://github.com/AvanindraBose/Twitter-Sentiment-Detection"
 
 [tool.ruff]
 line-length = 120
